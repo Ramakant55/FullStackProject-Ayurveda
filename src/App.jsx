@@ -9,7 +9,7 @@ import Products from './components/Products';
 import Contact from './components/Contact';
 import Profile from './components/Profile';
 import Footer from './components/Footer';
-import ScrollTo from './components/ScrollTo';
+import Scrolltop from './components/Scrolltop';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -41,7 +41,7 @@ function App() {
 
   return (
     <Router>
-     <ScrollTo/>
+      <Scrolltop />
       <div className="flex flex-col min-h-screen">
         <Navbar />
         <main className="flex-grow pt-16">
