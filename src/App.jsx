@@ -9,7 +9,7 @@ import Products from './components/Products';
 import Contact from './components/Contact';
 import Profile from './components/Profile';
 import Footer from './components/Footer';
-import ScrollToTop from './components/ScrollToTopToTop';
+import ScrollToTop from './components/ScrollToTop';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
