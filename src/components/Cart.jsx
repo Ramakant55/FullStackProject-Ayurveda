@@ -2,7 +2,6 @@ import React, { useState, useEffect, useContext } from 'react';
 import { motion } from 'framer-motion';
 import { TrashIcon, MinusIcon, PlusIcon } from '@heroicons/react/24/outline';
 import { Link } from 'react-router-dom';
-import { CartContext } from '../context/CartContext';
 
 const Cart = () => {
     const { cartItems, updateQuantity, removeItem, loading } = useContext(CartContext);

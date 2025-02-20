@@ -32,8 +32,6 @@ const Navbar = () => {
                 return sum + (item?.quantity || 0);
             }, 0);
             setCartCount(totalCount);
-            // Refresh the page
-            window.location.reload();
         };
 
         window.addEventListener('cartUpdated', handleCartUpdate);
@@ -158,16 +156,16 @@ const Navbar = () => {
         </div>
     );
 
-    const removeFromCart = (productId) => {
-        // Your existing remove logic
-        const updatedCartItems = // ... your update logic
+    // const removeFromCart = (productId) => {
+    //     // Your existing remove logic
+    //     const updatedCartItems = // ... your update logic
         
-        // Update localStorage
-        localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
+    //     // Update localStorage
+    //     localStorage.setItem('cartItems', JSON.stringify(updatedCartItems));
         
-        // Dispatch event WITHOUT any detail
-        window.dispatchEvent(new CustomEvent('cartUpdated'));
-    };
+    //     // Dispatch event WITHOUT any detail
+    //     window.dispatchEvent(new CustomEvent('cartUpdated'));
+    // };
 
     return (
         <nav className="bg-white shadow-lg fixed w-full z-50">
