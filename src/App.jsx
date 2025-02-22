@@ -10,6 +10,14 @@ import Contact from './components/Contact';
 import Profile from './components/Profile';
 import Footer from './components/Footer';
 import Scrolltop from './components/Scrolltop';
+import Cart from './components/Cart';
+import SellerLogin from './pages/SellerLogin';
+import SellerRegister from './pages/SellerRegister';
+import SellerDashboard from './pages/SellerDashboard';
+import SellerVerifyOTP from './pages/SellerVerifyOTP';
+import Checkout from './components/Checkout';
+import { Toaster } from 'react-hot-toast';
+
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -44,6 +52,7 @@ function App() {
       <Scrolltop />
       <div className="flex flex-col min-h-screen">
         <Navbar />
+        <Toaster position="top-center" reverseOrder={false} />
         <main className="flex-grow pt-16">
           <Routes>
             <Route path="/" element={<Home />} />
@@ -52,11 +61,17 @@ function App() {
             <Route path="/verify-otp" element={<VerifyOtp />} />
             <Route path="/products" element={<Products />} />
             <Route path="/contact" element={<Contact />} />
+            <Route path="/cart" element={<Cart />} />
+            <Route path="/checkout" element={<Checkout />} />
             <Route path="/profile" element={
                 <ProtectedRoute>
                     <Profile />
                 </ProtectedRoute>
             } />
+            <Route path="/seller/login" element={<SellerLogin />} />
+            <Route path="/seller/register" element={<SellerRegister />} />
+            <Route path="/seller/dashboard" element={<SellerDashboard />} />
+            <Route path="/seller/verify-otp" element={<SellerVerifyOTP />} />
             {/* Catch all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
