@@ -16,6 +16,7 @@ import SellerRegister from './pages/SellerRegister';
 import SellerDashboard from './pages/SellerDashboard';
 import SellerVerifyOTP from './pages/SellerVerifyOTP';
 import Checkout from './components/Checkout';
+import ProductFormPage from './pages/ProductFormPage';
 import { Toaster } from 'react-hot-toast';
 
 // Protected Route Component
@@ -72,6 +73,8 @@ function App() {
             <Route path="/seller/register" element={<SellerRegister />} />
             <Route path="/seller/dashboard" element={<SellerDashboard />} />
             <Route path="/seller/verify-otp" element={<SellerVerifyOTP />} />
+            <Route path="/add-product" element={<ProductFormPage mode="add" />} />
+            <Route path="/edit-product/:id" element={<ProductFormPage mode="edit" />} />
             {/* Catch all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
