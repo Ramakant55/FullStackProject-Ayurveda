@@ -12,52 +12,56 @@ const SellerLogin = () => {
         password: ''
     });
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
-        setIsLoading(true);
+ // In SellerLogin.jsx - Update the handleSubmit function
 
-        try {
-            // Check if form data is complete
-            if (!formData.email || !formData.password) {
-                toast.error('Please fill in all fields');
-                return;
-            }
+const handleSubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
 
-            console.log('Attempting login with:', formData);
-
-            const response = await fetch('https://expressjs-zpto.onrender.com/api/seller/login', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Accept': 'application/json'
-                },
-                body: JSON.stringify(formData)
-            });
-
-            const data = await response.json();
-            console.log('Login response:', data);
-
-            if (response.ok && data.token) {
-                // Store the token and seller info
-                localStorage.setItem('sellerToken', data.token);
-                if (data.seller) {
-                    localStorage.setItem('sellerInfo', JSON.stringify(data.seller));
-                }
-                
-                toast.success('Login successful!');
-                navigate('/seller/dashboard');
-            } else {
-                // Handle specific error messages
-                const errorMessage = data.message || 'Login failed. Please check your credentials.';
-                toast.error(errorMessage);
-            }
-        } catch (error) {
-            console.error('Login error:', error);
-            toast.error('Unable to connect to server. Please try again later.');
-        } finally {
-            setIsLoading(false);
+    try {
+        if (!formData.email || !formData.password) {
+            toast.error('Please fill in all fields');
+            return;
         }
-    };
+
+        console.log('Attempting login with:', formData);
+
+        const response = await fetch('https://expressjs-zpto.onrender.com/api/seller/login', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Accept': 'application/json'
+            },
+            body: JSON.stringify(formData)
+        });
+
+        const data = await response.json();
+        console.log('Login response:', data);
+
+        if (response.ok && data.token) {
+            // Store the token
+            localStorage.setItem('sellerToken', data.token);
+            
+            // Store seller info and seller ID separately
+            if (data.seller) {
+                localStorage.setItem('sellerInfo', JSON.stringify(data.seller));
+                // Store seller ID separately
+                localStorage.setItem('sellerId', data.seller._id); // Add this line
+            }
+            
+            toast.success('Login successful!');
+            navigate('/seller/dashboard');
+        } else {
+            const errorMessage = data.message || 'Login failed. Please check your credentials.';
+            toast.error(errorMessage);
+        }
+    } catch (error) {
+        console.error('Login error:', error);
+        toast.error('Unable to connect to server. Please try again later.');
+    } finally {
+        setIsLoading(false);
+    }
+};
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;

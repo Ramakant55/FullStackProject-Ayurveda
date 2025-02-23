@@ -12,7 +12,7 @@ import {
     ChevronDownIcon,
     CogIcon,
     ArrowRightStartOnRectangleIcon as ArrowRightOnRectangleIcon,
-    BuildingStorefrontIcon
+    BuildingStorefrontIcon,
 } from '@heroicons/react/24/outline';
 
 const Navbar = () => {

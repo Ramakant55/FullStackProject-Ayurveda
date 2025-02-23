@@ -170,7 +170,7 @@ const Products = () => {
               <motion.div
                 key={product._id}
                 whileHover={{ scale: 1.03 }}
-                className="bg-white p-6 rounded-lg shadow-lg flex flex-col cursor-pointer"
+                className="bg-white p-6 rounded-lg shadow-sm shadow-black flex flex-col cursor-pointer"
                 onClick={() => handleProductClick(product)}
               >
                 <div className="relative">

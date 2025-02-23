@@ -13,7 +13,7 @@ import { FaFacebook, FaTwitter, FaInstagram, FaLinkedin } from 'react-icons/fa';
 
 const Footer = () => {
     return (
-        <footer className="relative bg-gradient-to-t from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
+        <footer className="bg-gradient-to-t from-green-500 via-emerald-500 to-teal-500 relative overflow-hidden">
             {/* Background Pattern */}
             <div className="absolute inset-0 overflow-hidden">
                 {[...Array(20)].map((_, i) => (
@@ -45,7 +45,7 @@ const Footer = () => {
                     {[
                         { title: "About Us", icon: HeartIcon, content: "Experience the ancient wisdom of Ayurveda through our carefully curated collection of authentic products. We're dedicated to bringing wellness and balance to your life naturally." },
                         { title: "Quick Links", icon: GlobeAltIcon, content: "Our Products", links: [{ href: "/products", label: "Our Products" }, { href: "/about", label: "About Us" }, { href: "/contact", label: "Contact" }] },
-                        { title: "Contact Us", icon: UserGroupIcon, content: "info@ayurveda.com", details: [{ label: "+91 123 456 7890", icon: PhoneIcon }, { label: "123, Ayurveda Street, Delhi", icon: MapPinIcon }] },
+                        { title: "Contact Us", icon: UserGroupIcon, content: "kdmayurveda.com", details: [{ label: "+91 982 878 4436", icon: PhoneIcon }, { label: "123, Ayurveda Street, Delhi", icon: MapPinIcon }] },
                         { title: "Connect With Us", icon: null, content: "Connect With Us", icons: [FaTwitter, FaFacebook, FaInstagram, FaLinkedin] }
                     ].map((card, index) => (
                         <motion.div 
@@ -114,7 +114,7 @@ const Footer = () => {
                                     </div>
                                 )}
                                 {card.icons && (
-                                    <div className="flex space-x-4">
+                                    <div className="flex space-x-2">
                                         {card.icons.map((Icon, index) => (
                                             <motion.a
                                                 key={index}

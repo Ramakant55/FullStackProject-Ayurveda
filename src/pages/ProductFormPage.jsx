@@ -46,7 +46,30 @@ const ProductFormPage = () => {
         try {
             const formDataToSend = new FormData();
             
-            // Append all form fields
+            // Try to get seller ID directly first
+            let sellerId = localStorage.getItem('sellerId');
+            
+            // If not found, try to get it from sellerInfo
+            if (!sellerId) {
+                const sellerInfo = localStorage.getItem('sellerInfo');
+                if (sellerInfo) {
+                    const parsedSellerInfo = JSON.parse(sellerInfo);
+                    sellerId = parsedSellerInfo._id;
+                    // Store it separately for future use
+                    localStorage.setItem('sellerId', sellerId);
+                }
+            }
+
+            console.log('Seller ID being used:', sellerId);
+
+            if (!sellerId) {
+                throw new Error('Seller ID not found. Please login again.');
+            }
+
+            // Append seller ID
+            formDataToSend.append('seller', sellerId);
+            
+            // Rest of your form data appending
             Object.keys(formData).forEach(key => {
                 if (key === 'sizes' || key === 'tags') {
                     formDataToSend.append(key, JSON.stringify(formData[key]));
@@ -59,17 +82,12 @@ const ProductFormPage = () => {
                 }
             });
 
-            // Add seller ID from localStorage
-            formDataToSend.append('seller', localStorage.getItem('sellerId'));
-
             const url = mode === 'add' 
                 ? 'https://expressjs-zpto.onrender.com/api/products'
                 : `https://expressjs-zpto.onrender.com/api/products/${id}`;
 
-            const method = mode === 'add' ? 'POST' : 'PATCH';
-
             const response = await fetch(url, {
-                method: method,
+                method: mode === 'add' ? 'POST' : 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${localStorage.getItem('sellerToken')}`
                 },
@@ -77,25 +95,30 @@ const ProductFormPage = () => {
             });
 
             if (!response.ok) {
-                throw new Error('Failed to save product');
+                const errorData = await response.json();
+                console.error('Server Error Response:', errorData);
+                throw new Error(errorData.message || 'Failed to save product');
             }
+
+            const responseData = await response.json();
+            console.log('Success Response:', responseData);
 
             toast.success(mode === 'add' ? 'Product added successfully!' : 'Product updated successfully!');
             navigate('/seller-dashboard');
         } catch (error) {
-            console.error('Error:', error);
-            toast.error('Failed to save product. Please try again.');
+            console.error('Error in handleSubmit:', error);
+            toast.error(error.message || 'Failed to save product. Please try again.');
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50 py-8">
+        <div className="min-h-screen bg-gradient-to-b from-green-500 via-emerald-500 to-teal-500 py-8">
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
                 {/* Header */}
                 <div className="flex justify-between items-center mb-8">
-                    <h1 className="text-2xl font-bold text-gray-800">
+                    <h1 className="text-2xl font-bold text-white">
                         {mode === 'add' ? 'Add New Product' : 'Edit Product'}
                     </h1>
                     <button

@@ -34,7 +34,7 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-green-500 via-emerald-500 to-teal-500 p-8 relative overflow-hidden">
+    <div className="min-h-screen bg-gradient-to-b from-green-500 via-emerald-500 to-teal-500 p-8 relative overflow-hidden">
       {/* Floating Elements */}
       {[...Array(20)].map((_, i) => (
         <motion.div

@@ -18,7 +18,7 @@ import SellerVerifyOTP from './pages/SellerVerifyOTP';
 import Checkout from './components/Checkout';
 import ProductFormPage from './pages/ProductFormPage';
 import { Toaster } from 'react-hot-toast';
-
+import AboutUs from './components/AboutUs';
 // Protected Route Component
 const ProtectedRoute = ({ children }) => {
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
@@ -75,6 +75,7 @@ function App() {
             <Route path="/seller/verify-otp" element={<SellerVerifyOTP />} />
             <Route path="/add-product" element={<ProductFormPage mode="add" />} />
             <Route path="/edit-product/:id" element={<ProductFormPage mode="edit" />} />
+            <Route path="/about" element={<AboutUs />} />
             {/* Catch all route - redirect to home */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
