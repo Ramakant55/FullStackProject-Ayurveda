@@ -217,7 +217,7 @@ const Navbar = () => {
                                 className="flex items-center"
                             >
                                 <img 
-                                    src="/ayurveda-logo.png" 
+                                    src="https://th.bing.com/th/id/OIP.8QdTg-BC4fsWpw07BsgkFwHaGC?rs=1&pid=ImgDetMain" 
                                     alt="Ayurveda Logo" 
                                     className="h-10 w-10 mr-2"
                                 />

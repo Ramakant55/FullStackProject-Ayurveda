@@ -2,11 +2,6 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { TrashIcon, PencilIcon, UserCircleIcon, ArrowRightOnRectangleIcon, UsersIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { Swiper, SwiperSlide } from 'swiper/react';
-import { Navigation, Pagination, Autoplay } from 'swiper/modules';
-import 'swiper/css';
-import 'swiper/css/navigation';
-import 'swiper/css/pagination';
 import { AnimatePresence, motion } from 'framer-motion';
 
 const SellerDashboard = () => {
@@ -170,15 +165,6 @@ const SellerDashboard = () => {
             stock: '',
             imageurl: '',
         });
-    };
-
-    const swiperStyles = {
-        padding: '20px 10px 40px',
-    };
-
-    const navigationStyles = {
-        '--swiper-navigation-color': '#059669',
-        '--swiper-pagination-color': '#059669',
     };
 
     const handleLogout = () => {
@@ -596,90 +582,64 @@ const SellerDashboard = () => {
                                     <p className="mt-1 text-sm text-gray-500">Get started by creating a new product.</p>
                                 </div>
                             ) : (
-                                <div style={navigationStyles}>
-                                    <Swiper
-                                        style={swiperStyles}
-                                        modules={[Navigation, Pagination, Autoplay]}
-                                        spaceBetween={20}
-                                        slidesPerView={3}
-                                        navigation
-                                        pagination={{ clickable: true }}
-                                        autoplay={{
-                                            delay: 3000,
-                                            disableOnInteraction: false,
-                                        }}
-                                        breakpoints={{
-                                            640: {
-                                                slidesPerView: 1,
-                                            },
-                                            768: {
-                                                slidesPerView: 2,
-                                            },
-                                            1024: {
-                                                slidesPerView: 3,
-                                            },
-                                        }}
-                                    >
-                                        {products.map(product => (
-                                            <SwiperSlide key={product._id}>
-                                                <div className="bg-white rounded-xl shadow-md shadow-black overflow-hidden hover:shadow-lg transition-shadow duration-300 ease-in-out h-full">
-                                                    <div className="relative h-48">
-                                                        <img
-                                                            className="w-full h-full object-cover"
-                                                            src={product.imageurl}
-                                                            alt={product.name}
-                                                            onError={(e) => {
-                                                                e.target.src = 'https://via.placeholder.com/150';
-                                                            }}
-                                                        />
-                                                        <div className="absolute top-2 right-2 flex space-x-2">
-                                                            <button
-                                                                onClick={() => handleDeleteProduct(product._id)}
-                                                                className="p-1 bg-white rounded-full text-red-600 hover:text-red-800 transition-colors duration-200"
-                                                            >
-                                                                <TrashIcon className="h-5 w-5" />
-                                                            </button>
-                                                            <button
-                                                                onClick={() => handleEditProduct(product)}
-                                                                className="p-1 bg-white rounded-full text-blue-600 hover:text-blue-800 transition-colors duration-200"
-                                                            >
-                                                                <PencilIcon className="h-4 w-4" />
-                                                            </button>
-                                                        </div>
-                                                    </div>
-                                                    <div className="p-6">
-                                                        <div className="uppercase tracking-wide text-sm text-emerald-500 font-semibold">
-                                                            {product.category}
-                                                        </div>
-                                                        <h3 className="mt-2 text-xl font-semibold text-gray-900">
-                                                            {product.name}
-                                                        </h3>
-                                                        <p className="mt-3 text-gray-500 line-clamp-2">
-                                                            {product.description}
-                                                        </p>
-                                                        <div className="mt-4 flex justify-between items-center">
-                                                            <div className="flex items-center">
-                                                                <span className="text-2xl font-bold text-emerald-600">₹{product.price}</span>
-                                                                <span className="ml-2 text-sm text-gray-500">per unit</span>
-                                                            </div>
-                                                        </div>
-                                                        <div className="mt-4">
-                                                            <div className="flex justify-between items-center mb-2">
-                                                                <span className="text-sm text-gray-600">Stock Level</span>
-                                                                <span className="text-sm font-medium text-emerald-600">{product.quantity} units</span>
-                                                            </div>
-                                                            <div className="relative w-full h-2 bg-gray-200 rounded">
-                                                                <div 
-                                                                    className="absolute h-2 bg-emerald-500 rounded"
-                                                                    style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
-                                                                ></div>
-                                                            </div>
-                                                        </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                                    {products.map(product => (
+                                        <div key={product._id} className="bg-white rounded-xl shadow-md shadow-black overflow-hidden hover:shadow-lg transition-shadow duration-300 ease-in-out">
+                                            <div className="relative h-48">
+                                                <img
+                                                    className="w-full h-full object-cover"
+                                                    src={product.imageurl}
+                                                    alt={product.name}
+                                                    onError={(e) => {
+                                                        e.target.src = 'https://via.placeholder.com/150';
+                                                    }}
+                                                />
+                                                <div className="absolute top-2 right-2 flex space-x-2">
+                                                    <button
+                                                        onClick={() => handleDeleteProduct(product._id)}
+                                                        className="p-1 bg-white rounded-full text-red-600 hover:text-red-800 transition-colors duration-200"
+                                                    >
+                                                        <TrashIcon className="h-5 w-5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleEditProduct(product)}
+                                                        className="p-1 bg-white rounded-full text-blue-600 hover:text-blue-800 transition-colors duration-200"
+                                                    >
+                                                        <PencilIcon className="h-4 w-4" />
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <div className="p-6">
+                                                <div className="uppercase tracking-wide text-sm text-emerald-500 font-semibold">
+                                                    {product.category}
+                                                </div>
+                                                <h3 className="mt-2 text-xl font-semibold text-gray-900">
+                                                    {product.name}
+                                                </h3>
+                                                <p className="mt-3 text-gray-500 line-clamp-2">
+                                                    {product.description}
+                                                </p>
+                                                <div className="mt-4 flex justify-between items-center">
+                                                    <div className="flex items-center">
+                                                        <span className="text-2xl font-bold text-emerald-600">₹{product.price}</span>
+                                                        <span className="ml-2 text-sm text-gray-500">per unit</span>
                                                     </div>
                                                 </div>
-                                            </SwiperSlide>
-                                        ))}
-                                    </Swiper>
+                                                <div className="mt-4">
+                                                    <div className="flex justify-between items-center mb-2">
+                                                        <span className="text-sm text-gray-600">Stock Level</span>
+                                                        <span className="text-sm font-medium text-emerald-600">{product.quantity} units</span>
+                                                    </div>
+                                                    <div className="relative w-full h-2 bg-gray-200 rounded">
+                                                        <div 
+                                                            className="absolute h-2 bg-emerald-500 rounded"
+                                                            style={{ width: `${Math.min((product.stock / 100) * 100, 100)}%` }}
+                                                        ></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
