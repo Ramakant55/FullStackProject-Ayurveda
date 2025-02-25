@@ -211,7 +211,7 @@ const AboutUs = () => {
             {[
               { label: 'Customer Care Email', value: 'customercare@ayurveda.com' },
               { label: 'Customer Care Number', value: '+91 982 878 4436' },
-              { label: 'Address', value: 'B8 & B16, Sector-3, New Delhi, India' },
+              { label: 'Address', value: 'B8 Sector-3, New Delhi, India' },
               { label: 'Working Hours', value: '9am to 6pm (Mon to Sat)' }
             ].map((item, index) => (
               <motion.p 
