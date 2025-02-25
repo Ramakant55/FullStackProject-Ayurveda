@@ -214,7 +214,7 @@ const AboutUs = () => {
               { label: 'Address', value: 'B8 Sector-3, New Delhi, India' },
               { label: 'Working Hours', value: '9am to 6pm (Mon to Sat)' }
             ].map((item, index) => (
-              <motion.p 
+              <motion.p
                 key={index}
                 className="text-black"
                 initial={{ opacity: 0, x: -20 }}
