@@ -53,59 +53,58 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!validateForm()) return;
 
     setIsLoading(true);
     try {
-      const response = await fetch("https://expressjs-zpto.onrender.com/api/user/login", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "Accept": "application/json"
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password
-        })
-      });
+        const response = await fetch("https://expressjs-zpto.onrender.com/api/user/login", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify(formData)
+        });
 
-      if (!response.ok) {
-        const errorData = await response.text();
-        console.error('Response not OK:', response.status, errorData);
-        throw new Error('Login failed. Please check your credentials.');
-      }
+        const data = await response.json();
 
-      const data = await response.json();
-      
-      // Store user data properly
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('isAuthenticated', 'true');
-      localStorage.setItem('userProfile', JSON.stringify({
-        name: data.user.name,
-        email: data.user.email,
-        phone: data.user.phone,
-        avatar: data.user.avatar
-      }));
+        // First check if user exists
+        if (data.message === "User not found" || data.message === "User does not exist") {
+            toast.error("User not registered! Please sign up first");
+            setTimeout(() => {
+                navigate('/register');
+            }, 1500);
+            return;
+        }
 
-      if (rememberMe) {
-        localStorage.setItem('rememberedEmail', formData.email);
-      }
-      
-      // Dispatch custom event for Navbar update
-      window.dispatchEvent(new Event('storage'));
-      
-      toast.success("Login successful!");
-      setTimeout(() => {
-        navigate('/');
-      }, 1000);
+        // Then check for other errors
+        if (!response.ok) {
+            if (data.message === "Invalid password") {
+                toast.error("Invalid password");
+            } else {
+                toast.error(data.message || "Login failed");
+            }
+            return;
+        }
+
+        // If everything is ok, proceed with login
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('userProfile', JSON.stringify(data.user));
+        window.dispatchEvent(new Event('storage'));
+
+        toast.success("Login successful!");
+        setTimeout(() => {
+            navigate('/');
+        }, 1000);
 
     } catch (error) {
-      console.error("Login error:", error);
-      toast.error(error.message || "Login failed. Please try again.");
+        console.error("Login error:", error);
+        toast.error("Something went wrong. Please try again.");
     } finally {
-      setIsLoading(false);
+        setIsLoading(false);
     }
-  };
+};
+
 
   const handleSocialLogin = (platform) => {
     toast.success(`${platform} login coming soon!`);
