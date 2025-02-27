@@ -89,7 +89,6 @@ const Navbar = () => {
         { name: 'Home', path: '/', icon: HomeIcon },
         { name: 'Products', path: '/products', icon: ShoppingBagIcon },
         { name: 'Contact', path: '/contact', icon: PhoneIcon },
-        { name: 'Seller', path: '/seller', icon: UserGroupIcon },
         { name: 'Cart', path: '/cart', icon: ShoppingCartIcon },
     ];
 
@@ -163,17 +162,7 @@ const Navbar = () => {
 
     const SellerDropdown = () => (
         <div className="relative">
-            <motion.button
-                whileHover={{ scale: 1.05 }}
-                onClick={() => setShowSellerMenu(!showSellerMenu)}
-                className="flex items-center space-x-2 text-gray-600 hover:text-emerald-600 focus:outline-none"
-            >
-                <BuildingStorefrontIcon className="h-5 w-5" />
-                <span>Seller</span>
-                <ChevronDownIcon className="h-4 w-4" />
-            </motion.button>
-
-            <AnimatePresence>
+               <AnimatePresence>
                 {showSellerMenu && (
                     <motion.div
                         initial={{ opacity: 0, y: -10 }}
@@ -229,7 +218,7 @@ const Navbar = () => {
                         </Link>
 
                         {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex items-center space-x-10 ml-40 font-semibold">
+                        <div className="hidden md:flex items-center space-x-10 ml-40">
                             <motion.div whileHover={{ scale: 1.1 }}>
                                 <Link to="/" className="nav-link flex items-center space-x-2">
                                     <HomeIcon className="h-5 w-5" />
@@ -243,10 +232,61 @@ const Navbar = () => {
                                 </Link>
                             </motion.div>
                             <motion.div whileHover={{ scale: 1.1 }}>
-                                <Link to="/seller" className="nav-link flex items-center space-x-2">
-                                    <UserGroupIcon className="h-5 w-5" />
-                                    <span>Seller</span>
-                                </Link>
+                                <div 
+                                    className="nav-link flex items-center space-x-2 cursor-pointer relative"
+                                    onMouseEnter={() => setShowSellerMenu(true)}
+                                    onMouseLeave={() => setShowSellerMenu(false)}
+                                >
+                                    <BuildingStorefrontIcon className="h-5 w-5" />
+                                    <span>Become a Seller</span>
+                                    <ChevronDownIcon className="h-4 w-4" />
+                                    
+                                    {/* Seller Dropdown Menu */}
+                                    {showSellerMenu && (
+                                        <motion.div
+                                            initial={{ opacity: 0, y: 10 }}
+                                            animate={{ opacity: 1, y: 0 }}
+                                            exit={{ opacity: 0, y: 10 }}
+                                            className="absolute top-full left-0 mt-1 w-48 bg-white rounded-lg shadow-lg py-2 z-50"
+                                        >
+                                            {isAuthenticated ? (
+                                                <Link 
+                                                    to="/seller/dashboard"
+                                                    className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                >
+                                                    Seller Dashboard
+                                                </Link>
+                                            ) : (
+                                                <>
+                                                    <Link 
+                                                        to="/seller/register"
+                                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                    >
+                                                        Register as Seller
+                                                    </Link>
+                                                    <Link 
+                                                        to="/seller/login"
+                                                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                                    >
+                                                        Seller Login
+                                                    </Link>
+                                                </>
+                                            )}
+                                            <Link 
+                                                to="/seller/benefits"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Seller Benefits
+                                            </Link>
+                                            <Link 
+                                                to="/seller/help"
+                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                                            >
+                                                Seller Help
+                                            </Link>
+                                        </motion.div>
+                                    )}
+                                </div>
                             </motion.div>
                             <motion.div whileHover={{ scale: 1.1 }}>
                                 <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
@@ -392,28 +432,43 @@ const Navbar = () => {
                                 </Link>
                                 </>
                             )}
-                            <Link
-                                to="/seller/dashboard"
-                                className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                <BuildingStorefrontIcon className="h-5 w-5 mr-2" />
-                                Seller Dashboard
-                            </Link>
-                            <Link
-                                to="/seller/register"
-                                className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Seller Register
-                            </Link>
-                            <Link
-                                to="/seller/login"
-                                className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
-                                onClick={() => setIsOpen(false)}
-                            >
-                                Seller Login
-                            </Link>
+                            <div className="border-t mt-2 pt-2">
+                                <p className="px-3 py-2 text-sm font-semibold text-gray-500">Seller Options</p>
+                                {isAuthenticated ? (
+                                    <Link
+                                        to="/seller/dashboard"
+                                        className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <BuildingStorefrontIcon className="h-5 w-5 mr-2" />
+                                        Seller Dashboard
+                                    </Link>
+                                ) : (
+                                    <>
+                                        <Link
+                                            to="/seller/register"
+                                            className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
+                                            onClick={() => setIsOpen(false)}
+                                        >
+                                            Register as Seller
+                                        </Link>
+                                        <Link
+                                            to="/seller/login"
+                                            className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
+                                            onClick={() => setIsOpen(false)}
+                                        >
+                                            Seller Login
+                                        </Link>
+                                    </>
+                                )}
+                                <Link
+                                    to="/seller/benefits"
+                                    className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
+                                    onClick={() => setIsOpen(false)}
+                                >
+                                    Seller Benefits
+                                </Link>
+                            </div>
                         </div>
                     </motion.div>
                 )}
