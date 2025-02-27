@@ -10,6 +10,30 @@ const Cart = () => {
     const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
+    const handleCheckout = () => {
+        const token = localStorage.getItem('token');
+        const user = JSON.parse(localStorage.getItem('userProfile'));
+        
+        if (!token || !user) {
+            toast.error('Please login to proceed with checkout');
+            sessionStorage.setItem('checkoutPending', 'true');
+            navigate('/login');
+            return;
+        }
+        
+        navigate('/checkout');
+    };
+
+    useEffect(() => {
+        const checkoutPending = sessionStorage.getItem('checkoutPending');
+        const token = localStorage.getItem('token');
+        
+        if (checkoutPending && token) {
+            sessionStorage.removeItem('checkoutPending');
+            navigate('/checkout');
+        }
+    }, [navigate]);
+
     useEffect(() => {
         loadCartItems();
     }, []);
@@ -188,18 +212,7 @@ const Cart = () => {
                             </Link>
                             <button 
                                 className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
-                                onClick={() => {
-                                    const token = localStorage.getItem('token');
-                                    const user = JSON.parse(localStorage.getItem('userProfile'));
-                                    
-                                    if (!token || !user) {
-                                        toast.error('Please login first');
-                                        navigate('/login');
-                                        return;
-                                    }
-                                    
-                                    navigate('/checkout');
-                                }}
+                                onClick={handleCheckout}
                             >
                                 Proceed to Checkout
                             </button>

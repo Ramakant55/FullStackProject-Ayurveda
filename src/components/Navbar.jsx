@@ -13,6 +13,7 @@ import {
     CogIcon,
     ArrowRightStartOnRectangleIcon as ArrowRightOnRectangleIcon,
     BuildingStorefrontIcon,
+    UserGroupIcon,
 } from '@heroicons/react/24/outline';
 
 const Navbar = () => {
@@ -88,6 +89,8 @@ const Navbar = () => {
         { name: 'Home', path: '/', icon: HomeIcon },
         { name: 'Products', path: '/products', icon: ShoppingBagIcon },
         { name: 'Contact', path: '/contact', icon: PhoneIcon },
+        { name: 'Seller', path: '/seller', icon: UserGroupIcon },
+        { name: 'Cart', path: '/cart', icon: ShoppingCartIcon },
     ];
 
     const ProfileDropdown = () => (
@@ -226,85 +229,60 @@ const Navbar = () => {
                         </Link>
 
                         {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex items-center ml-40 space-x-10">
-                            {navItems.map((item) => (
-                                (!item.protected || isAuthenticated) && (
-                                    <motion.div
-                                        key={item.name}
-                                        whileHover={{ scale: 1.1 }}
-                                    >
-                                        <Link
-                                            to={item.path}
-                                            className="flex items-center text-gray-600 hover:text-emerald-600 transition-colors"
-                                        >
-                                            <item.icon className="h-5 w-5 mr-1" />
-                                            {item.name}
+                        <div className="hidden md:flex items-center space-x-10 ml-40">
+                            <Link to="/" className="nav-link flex items-center space-x-2">
+                                <HomeIcon className="h-5 w-5" />
+                                <span>Home</span>
+                            </Link>
+                            <Link to="/products" className="nav-link flex items-center space-x-2">
+                                <ShoppingBagIcon className="h-5 w-5" />
+                                <span>Products</span>
+                            </Link>
+                            <Link to="/seller" className="nav-link flex items-center space-x-2">
+                                <UserGroupIcon className="h-5 w-5" />
+                                <span>Seller</span>
+                            </Link>
+                            <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
+                                <ShoppingCartIcon className="h-5 w-5" />
+                                <span>Cart</span>
+                                {cartCount > 0 && (
+                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                        {cartCount}
+                                    </span>
+                                )}
+                            </Link>
+                            <Link to="/contact" className="nav-link flex items-center space-x-2">
+                                <PhoneIcon className="h-5 w-5" />
+                                <span>Contact</span>
                                         </Link>
-                                    </motion.div>
-                                )
-                            ))}
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                                <SellerDropdown />
-                            </motion.div>
                         </div>
                     </div>
 
                     {/* Right Side Navigation */}
-                    <div className="hidden md:flex items-center space-x-4">
-                        {isAuthenticated ? (
-                            <div className="flex items-center space-x-4">
-                                {/* Cart Icon */}
-                                <motion.div whileHover={{ scale: 1.1 }} className="relative">
-                                    <Link to="/cart" className="text-gray-600 hover:text-emerald-600">
-                                        <ShoppingCartIcon className="h-6 w-6" />
-                                        {cartCount > 0 ? (
-                                            <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                                {cartCount}
-                                            </span>
-                                        ) : null}
-                                    </Link>
-                                </motion.div>
-                                {/* Profile Dropdown */}
-                                <ProfileDropdown />
-                            </div>
-                        ) : (
-                            <div className="flex space-x-4">
-                                <motion.div whileHover={{ scale: 1.1 }}>
-                                    <Link
-                                        to="/login"
-                                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                                    >
-                                        Login
-                                    </Link>
-                                </motion.div>
-                                <motion.div whileHover={{ scale: 1.1 }}>
-                                    <Link
-                                        to="/register"
-                                        className="bg-white text-emerald-600 border border-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors"
-                                    >
-                                        Register
-                                    </Link>
-                                </motion.div>
-                            </div>
-                        )}
+                    <div className="hidden md:flex items-center space-x-4">                        
+                        {/* Login/Register Buttons */}
+                        <div className="flex space-x-4">
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link
+                                    to="/login"
+                                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                                >
+                                    Login
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link
+                                    to="/register"
+                                    className="bg-white text-emerald-600 border border-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors"
+                                >
+                                    Register
+                                </Link>
+                            </motion.div>
+                        </div>
                     </div>
 
                     {/* Mobile menu button */}
-                    <div className="md:hidden flex items-center space-x-4">
-                        {isAuthenticated && (
-                            <Link
-                                to="/cart"
-                                className="relative text-gray-600 hover:text-emerald-600"
-                            >
-                                <ShoppingCartIcon className="h-6 w-6" />
-                                {cartCount > 0 ? (
-                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                        {cartCount}
-                                    </span>
-                                ) : null}
-                            </Link>
-                        )}
-                        
+                    <div className="md:hidden flex items-center space-x-4">                       
                         <button
                             onClick={() => setIsOpen(!isOpen)}
                             className="text-gray-600 hover:text-emerald-600 focus:outline-none"

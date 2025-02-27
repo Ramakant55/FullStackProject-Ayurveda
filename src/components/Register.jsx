@@ -1,6 +1,6 @@
 import { React, useState } from "react";
 import { motion } from "framer-motion";
-import { UserIcon, EnvelopeIcon, LockClosedIcon, PhoneIcon, CalendarIcon } from "@heroicons/react/24/outline";
+import { UserIcon, EnvelopeIcon, LockClosedIcon, PhoneIcon, CalendarIcon, EyeIcon, EyeSlashIcon } from "@heroicons/react/24/outline";
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from 'react-router-dom';
 
@@ -13,47 +13,113 @@ const Register = () => {
         dob: "",
         phone: "",
     });
+    const [errors, setErrors] = useState({});
+    const [showPassword, setShowPassword] = useState(false);
 
-    const handleChange = (e) => {
-        setFormData({
-            ...formData,
-            [e.target.name]: e.target.value
-        });
-    };
-
-    // Add password validation
-    const validatePassword = (password) => {
-        const minLength = 8;
-        const hasUpperCase = /[A-Z]/.test(password);
-        const hasLowerCase = /[a-z]/.test(password);
-        const hasNumber = /\d/.test(password);
-        const hasSpecialChar = /[!@#$%^&*(),.?":{}|<>]/.test(password);
-
-        if (password.length < minLength) {
-            return "Password must be at least 8 characters long";
-        }
-        if (!hasUpperCase) {
-            return "Password must contain at least one uppercase letter";
-        }
-        if (!hasLowerCase) {
-            return "Password must contain at least one lowercase letter";
-        }
-        if (!hasNumber) {
-            return "Password must contain at least one number";
-        }
-        if (!hasSpecialChar) {
-            return "Password must contain at least one special character";
+    // Validation functions for each field
+    const validateName = (name) => {
+        if (!name) return "Name is required";
+        if (!/^[A-Za-z\s]{3,30}$/.test(name)) {
+            return "Name should only contain letters and be 3-30 characters long";
         }
         return "";
     };
 
+    const validateEmail = (email) => {
+        if (!email) return "Email is required";
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            return "Please enter a valid email address";
+        }
+        return "";
+    };
+
+    const validatePassword = (password) => {
+        if (!password) return "Password is required";
+        if (password.length < 8) return "Password must be at least 8 characters long";
+        if (!/[A-Z]/.test(password)) return "Password must contain at least one uppercase letter";
+        if (!/[a-z]/.test(password)) return "Password must contain at least one lowercase letter";
+        if (!/[0-9]/.test(password)) return "Password must contain at least one number";
+        if (!/[!@#$%^&*]/.test(password)) return "Password must contain at least one special character (!@#$%^&*)";
+        return "";
+    };
+
+    const validatePhone = (phone) => {
+        if (!phone) return "Phone number is required";
+        if (!/^[6-9]\d{9}$/.test(phone)) {
+            return "Please enter a valid 10-digit Indian phone number";
+        }
+        return "";
+    };
+
+    const validateDob = (dob) => {
+        if (!dob) return "Date of birth is required";
+        const birthDate = new Date(dob);
+        const today = new Date();
+        const age = today.getFullYear() - birthDate.getFullYear();
+        if (age < 10) return "You must be at least 10 years old";
+        if (age > 100) return "Please enter a valid date of birth";
+        return "";
+    };
+
+    const handleChange = (e) => {
+        const { name, value } = e.target;
+        
+        // Real-time validation based on field type
+        let error = "";
+        switch (name) {
+            case "name":
+                if (!/^[A-Za-z\s]*$/.test(value)) return; // Only allow letters and spaces
+                error = validateName(value);
+                break;
+            case "email":
+                // Only show email error when user stops typing
+                if (value.includes('@')) {
+                    error = validateEmail(value);
+                }
+                break;
+            case "password":
+                error = validatePassword(value);
+                break;
+            case "phone":
+                if (!/^\d*$/.test(value)) return; // Only allow numbers
+                error = validatePhone(value);
+                break;
+            case "dob":
+                error = validateDob(value);
+                break;
+            default:
+                break;
+        }
+
+        setFormData(prev => ({
+            ...prev,
+            [name]: value
+        }));
+
+        // Update errors state
+        setErrors(prev => ({
+            ...prev,
+            [name]: error
+        }));
+
+        // Show toast only if there's a new error and it's different from the previous one
+        if (error && error !== errors[name]) {
+            toast.error(error);
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        
-        // Validate password before submission
+
+        // Validate all fields before submission
+        const nameError = validateName(formData.name);
+        const emailError = validateEmail(formData.email);
         const passwordError = validatePassword(formData.password);
-        if (passwordError) {
-            toast.error(passwordError);
+        const phoneError = validatePhone(formData.phone);
+        const dobError = validateDob(formData.dob);
+
+        if (nameError || emailError || passwordError || phoneError || dobError) {
+            toast.error(nameError || emailError || passwordError || phoneError || dobError);
             return;
         }
 
@@ -70,9 +136,7 @@ const Register = () => {
             
             if (response.ok) {
                 localStorage.setItem('token', data.token);
-                console.log("Registration successful, Token stored:", data.token);
                 toast.success("Registration successful!");
-                // Automatically navigate to verify-otp page after successful registration
                 setTimeout(() => {
                     navigate('/verify-otp');
                 }, 1500);
@@ -80,13 +144,32 @@ const Register = () => {
                 throw new Error(data.message || "Registration failed");
             }
         } catch (error) {
-            console.error("Error:", error.toString());
-            toast.error("Registration failed: " + error.message);
+            console.error("Error:", error);
+            toast.error(error.message || "Registration failed");
         }
     };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center p-4 relative overflow-hidden">
+            {/* Add this style tag to hide default password toggle */}
+            <style>
+                {`
+                    input[type="password"]::-ms-reveal,
+                    input[type="password"]::-ms-clear {
+                        display: none;
+                    }
+                    input[type="password"]::-webkit-contacts-auto-fill-button,
+                    input[type="password"]::-webkit-credentials-auto-fill-button {
+                        visibility: hidden;
+                        display: none !important;
+                        pointer-events: none;
+                        height: 0;
+                        width: 0;
+                        margin: 0;
+                    }
+                `}
+            </style>
+
             {/* Animated background circles */}
             <div className="absolute inset-0 overflow-hidden">
                 {[...Array(20)].map((_, i) => (
@@ -168,13 +251,25 @@ const Register = () => {
                     >
                         <LockClosedIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70" />
                         <input
-                            type="password"
+                            type={showPassword ? "text" : "password"}
                             name="password"
                             value={formData.password}
                             onChange={handleChange}
                             placeholder="Enter Your Password"
                             className="w-full bg-white/10 border border-white/20 rounded-lg px-10 py-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all"
+                            autoComplete="off"
                         />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white transition-colors"
+                        >
+                            {showPassword ? (
+                                <EyeSlashIcon className="w-5 h-5" />
+                            ) : (
+                                <EyeIcon className="w-5 h-5" />
+                            )}
+                        </button>
                     </motion.div>
 
                     <motion.div
@@ -183,6 +278,19 @@ const Register = () => {
                         transition={{ delay: 0.3 }}
                         className="relative"
                     >
+                        <style>
+                            {`
+                                input[type="date"]::-webkit-calendar-picker-indicator {
+                                    opacity: 0;
+                                    position: absolute;
+                                    right: 0;
+                                    top: 0;
+                                    width: 100%;
+                                    height: 100%;
+                                    cursor: pointer;
+                                }
+                            `}
+                        </style>
                         <CalendarIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/70" />
                         <input
                             type="date"
