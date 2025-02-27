@@ -229,32 +229,42 @@ const Navbar = () => {
                         </Link>
 
                         {/* Desktop Navigation Links */}
-                        <div className="hidden md:flex items-center space-x-10 ml-40">
-                            <Link to="/" className="nav-link flex items-center space-x-2">
-                                <HomeIcon className="h-5 w-5" />
-                                <span>Home</span>
-                            </Link>
-                            <Link to="/products" className="nav-link flex items-center space-x-2">
-                                <ShoppingBagIcon className="h-5 w-5" />
-                                <span>Products</span>
-                            </Link>
-                            <Link to="/seller" className="nav-link flex items-center space-x-2">
-                                <UserGroupIcon className="h-5 w-5" />
-                                <span>Seller</span>
-                            </Link>
-                            <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
-                                <ShoppingCartIcon className="h-5 w-5" />
-                                <span>Cart</span>
-                                {cartCount > 0 && (
-                                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                        {cartCount}
-                                    </span>
-                                )}
-                            </Link>
-                            <Link to="/contact" className="nav-link flex items-center space-x-2">
-                                <PhoneIcon className="h-5 w-5" />
-                                <span>Contact</span>
-                                        </Link>
+                        <div className="hidden md:flex items-center space-x-10 ml-40 font-semibold">
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/" className="nav-link flex items-center space-x-2">
+                                    <HomeIcon className="h-5 w-5" />
+                                    <span>Home</span>
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/products" className="nav-link flex items-center space-x-2">
+                                    <ShoppingBagIcon className="h-5 w-5" />
+                                    <span>Products</span>
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/seller" className="nav-link flex items-center space-x-2">
+                                    <UserGroupIcon className="h-5 w-5" />
+                                    <span>Seller</span>
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
+                                    <ShoppingCartIcon className="h-5 w-5" />
+                                    <span>Cart</span>
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/contact" className="nav-link flex items-center space-x-2">
+                                    <PhoneIcon className="h-5 w-5" />
+                                    <span>Contact</span>
+                                </Link>
+                            </motion.div>
                         </div>
                     </div>
 
