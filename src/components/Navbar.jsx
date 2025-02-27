@@ -232,6 +232,23 @@ const Navbar = () => {
                                 </Link>
                             </motion.div>
                             <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
+                                    <ShoppingCartIcon className="h-5 w-5" />
+                                    <span>Cart</span>
+                                    {cartCount > 0 && (
+                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
+                                            {cartCount}
+                                        </span>
+                                    )}
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
+                                <Link to="/contact" className="nav-link flex items-center space-x-2">
+                                    <PhoneIcon className="h-5 w-5" />
+                                    <span>Contact</span>
+                                </Link>
+                            </motion.div>
+                            <motion.div whileHover={{ scale: 1.1 }}>
                                 <div 
                                     className="nav-link flex items-center space-x-2 cursor-pointer relative"
                                     onMouseEnter={() => setShowSellerMenu(true)}
@@ -272,38 +289,10 @@ const Navbar = () => {
                                                     </Link>
                                                 </>
                                             )}
-                                            <Link 
-                                                to="/seller/benefits"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                Seller Benefits
-                                            </Link>
-                                            <Link 
-                                                to="/seller/help"
-                                                className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                                            >
-                                                Seller Help
-                                            </Link>
-                                        </motion.div>
+                                           
+                                            </motion.div>
                                     )}
                                 </div>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                                <Link to="/cart" className="nav-link flex items-center space-x-2 relative">
-                                    <ShoppingCartIcon className="h-5 w-5" />
-                                    <span>Cart</span>
-                                    {cartCount > 0 && (
-                                        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                                            {cartCount}
-                                        </span>
-                                    )}
-                                </Link>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                                <Link to="/contact" className="nav-link flex items-center space-x-2">
-                                    <PhoneIcon className="h-5 w-5" />
-                                    <span>Contact</span>
-                                </Link>
                             </motion.div>
                         </div>
                     </div>

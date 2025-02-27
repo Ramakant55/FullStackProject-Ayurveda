@@ -485,39 +485,7 @@ const SellerDashboard = () => {
                                             >
                                                 <PlusIcon className="h-5 w-5 text-emerald-600" />
                                                 <span>Add New Product</span>
-                                            </button>
-
-                                            {/* Sellers List Button */}
-                                            <button
-                                                onClick={() => setShowSellersList(!showSellersList)}
-                                                className="flex items-center px-4 py-3 text-sm text-gray-700 hover:bg-emerald-50 w-full transition-colors duration-150"
-                                            >
-                                                <UsersIcon className="h-5 w-5 mr-3 text-emerald-600" />
-                                                <span>View All Sellers</span>
-                                            </button>
-                                            
-                                            {/* Sellers List Dropdown */}
-                                            {showSellersList && (
-                                                <div className="px-4 py-3 border-t border-gray-100 bg-gray-50">
-                                                    <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                                                        Registered Sellers
-                                                    </h3>
-                                                    <div className="max-h-48 overflow-y-auto">
-                                                        {sellers.map((seller, index) => (
-                                                            <div
-                                                                key={seller._id || index}
-                                                                className="flex items-center py-2 text-sm text-gray-700"
-                                                            >
-                                                                <UserCircleIcon className="h-5 w-5 mr-2 text-emerald-500" />
-                                                                <div>
-                                                                    <p className="font-medium">{seller.name}</p>
-                                                                    <p className="text-xs text-gray-500">{seller.storename}</p>
-                                                                </div>
-                                                            </div>
-                                                        ))}
-                                                    </div>
-                                                </div>
-                                            )}
+                                            </button>                                       
                                             
                                             {/* Logout Button */}
                                             <button
