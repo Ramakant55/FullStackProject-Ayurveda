@@ -7,100 +7,102 @@ import { toast } from 'react-hot-toast';
 const Cart = () => {
     const [cartItems, setCartItems] = useState([]);
     const [total, setTotal] = useState(0);
-    const [loading, setLoading] = useState(true);
     const navigate = useNavigate();
 
-    const handleCheckout = () => {
-        const token = localStorage.getItem('token');
-        const user = JSON.parse(localStorage.getItem('userProfile'));
-        
-        if (!token || !user) {
-            toast.error('Please login to proceed with checkout');
-            sessionStorage.setItem('checkoutPending', 'true');
-            navigate('/login');
-            return;
-        }
-        
-        navigate('/checkout');
-    };
-
-    useEffect(() => {
-        const checkoutPending = sessionStorage.getItem('checkoutPending');
-        const token = localStorage.getItem('token');
-        
-        if (checkoutPending && token) {
-            sessionStorage.removeItem('checkoutPending');
-            navigate('/checkout');
-        }
-    }, [navigate]);
-
-    useEffect(() => {
-        loadCartItems();
-    }, []);
-
+    // Load cart items from localStorage
     const loadCartItems = () => {
         try {
-            setLoading(true);
-            const items = JSON.parse(localStorage.getItem('cartItems')) || [];
-            console.log('Cart Items:', items);
+            const items = JSON.parse(localStorage.getItem('cartItems') || '[]');
             setCartItems(items);
             calculateTotal(items);
         } catch (error) {
             console.error('Error loading cart:', error);
-            toast.error('Error loading cart items');
-        } finally {
-            setLoading(false);
+            setCartItems([]);
+            setTotal(0);
         }
     };
 
+    // Calculate total price
     const calculateTotal = (items) => {
         const total = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
         setTotal(total);
     };
 
+    // Update quantity
     const updateQuantity = (productId, newQuantity) => {
-        if (newQuantity < 1) {
-            toast.error('Quantity cannot be less than 1');
+        try {
+            if (newQuantity < 1) {
+                toast.error('Quantity cannot be less than 1');
+                return;
+            }
+
+            const updatedItems = cartItems.map(item =>
+                item._id === productId ? { ...item, quantity: newQuantity } : item
+            );
+
+            setCartItems(updatedItems);
+            localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+            calculateTotal(updatedItems);
+            toast.success('Cart updated');
+        } catch (error) {
+            console.error('Error updating quantity:', error);
+            toast.error('Failed to update quantity');
+        }
+    };
+
+    // Remove item from cart
+    const removeItem = (productId) => {
+        try {
+            const updatedItems = cartItems.filter(item => item._id !== productId);
+            setCartItems(updatedItems);
+            localStorage.setItem('cartItems', JSON.stringify(updatedItems));
+            calculateTotal(updatedItems);
+            toast.success('Item removed from cart');
+        } catch (error) {
+            console.error('Error removing item:', error);
+            toast.error('Failed to remove item');
+        }
+    };
+
+    // Clear entire cart
+    const clearCart = () => {
+        try {
+            setCartItems([]);
+            localStorage.setItem('cartItems', '[]');
+            setTotal(0);
+            toast.success('Cart cleared');
+        } catch (error) {
+            console.error('Error clearing cart:', error);
+            toast.error('Failed to clear cart');
+        }
+    };
+
+    // Handle checkout
+    const handleCheckout = () => {
+        if (cartItems.length === 0) {
+            toast.error('Your cart is empty');
             return;
         }
-
-        const updatedItems = cartItems.map(item => 
-            item._id === productId ? { ...item, quantity: newQuantity } : item
-        );
-
-        setCartItems(updatedItems);
-        localStorage.setItem('cartItems', JSON.stringify(updatedItems));
-        calculateTotal(updatedItems);
-        window.dispatchEvent(new Event('storage'));
-        toast.success('Cart updated');
+        navigate('/checkout');
     };
 
-    const removeItem = (productId) => {
-        const itemToRemove = cartItems.find(item => item._id === productId);
-        const updatedItems = cartItems.filter(item => item._id !== productId);
-        setCartItems(updatedItems);
-        localStorage.setItem('cartItems', JSON.stringify(updatedItems));
-        calculateTotal(updatedItems);
-        window.dispatchEvent(new Event('storage'));
-        toast.success(`${itemToRemove.name} removed from cart`);
-    };
+    // Load cart items on component mount and when storage changes
+    useEffect(() => {
+        loadCartItems();
 
-    const clearCart = () => {
-        setCartItems([]);
-        localStorage.removeItem('cartItems');
-        calculateTotal([]);
-        window.dispatchEvent(new Event('storage'));
-        toast.success('Cart cleared');
-    };
+        // Listen for storage events (when cart is updated from other components)
+        const handleStorageChange = () => {
+            loadCartItems();
+        };
 
-    if (loading) {
-        return (
-            <div className="min-h-screen pt-20 flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-500"></div>
-            </div>
-        );
-    }
+        window.addEventListener('storage', handleStorageChange);
 
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+        };
+    }, []);
+
+    // Empty cart view
     if (cartItems.length === 0) {
         return (
             <div className="min-h-screen pt-20 px-4">
@@ -145,27 +147,17 @@ const Cart = () => {
                                 className="flex flex-col sm:flex-row items-center p-4 border rounded-xl hover:shadow-md transition-all bg-white"
                             >
                                 <div className="w-full sm:w-24 h-24 rounded-lg overflow-hidden mb-4 sm:mb-0">
-                                    {item.imageurl ? (
-                                        <img 
-                                            src={item.imageurl}
-                                            alt={item.name} 
-                                            className="w-full h-full object-cover"
-                                            onError={(e) => {
-                                                e.target.onerror = null;
-                                                e.target.src = '/placeholder.png';
-                                            }}
-                                        />
-                                    ) : (
-                                        <div className="w-full h-full bg-gray-200 flex items-center justify-center">
-                                            <span className="text-gray-400">No image</span>
-                                        </div>
-                                    )}
+                                    <img 
+                                        src={item.imageurl}
+                                        alt={item.name} 
+                                        className="w-full h-full object-cover"
+                                    />
                                 </div>
                                 <div className="flex-1 ml-4">
                                     <h3 className="text-lg font-semibold text-gray-800">{item.name}</h3>
-                                    <p className="text-emerald-600 font-medium">₹{item.price.toLocaleString()}</p>
+                                    <p className="text-emerald-600 font-medium">₹{item.price}</p>
                                     <p className="text-gray-500 text-sm">
-                                        Total: ₹{(item.price * item.quantity).toLocaleString()}
+                                        Total: ₹{(item.price * item.quantity).toFixed(2)}
                                     </p>
                                 </div>
                                 <div className="flex items-center space-x-2">
@@ -196,11 +188,11 @@ const Cart = () => {
                     <div className="mt-6 border-t pt-4">
                         <div className="flex justify-between items-center mb-4">
                             <div>
-                                <p className="text-gray-600">Subtotal: ₹{total.toLocaleString()}</p>
+                                <p className="text-gray-600">Subtotal: ₹{total.toFixed(2)}</p>
                                 <p className="text-gray-600">Delivery: FREE</p>
                             </div>
                             <div className="text-right">
-                                <p className="text-2xl font-bold text-emerald-600">₹{total.toLocaleString()}</p>
+                                <p className="text-2xl font-bold text-emerald-600">₹{total.toFixed(2)}</p>
                             </div>
                         </div>
                         <div className="flex justify-end space-x-4">
@@ -211,8 +203,8 @@ const Cart = () => {
                                 Continue Shopping
                             </Link>
                             <button 
-                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                                 onClick={handleCheckout}
+                                className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors"
                             >
                                 Proceed to Checkout
                             </button>

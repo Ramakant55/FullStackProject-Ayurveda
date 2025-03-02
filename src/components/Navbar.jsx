@@ -15,6 +15,7 @@ import {
     BuildingStorefrontIcon,
     UserGroupIcon,
 } from '@heroicons/react/24/outline';
+import { toast } from 'react-hot-toast';
 
 const Navbar = () => {
     const [isOpen, setIsOpen] = useState(false);
@@ -75,14 +76,10 @@ const Navbar = () => {
 
     const handleLogout = () => {
         localStorage.removeItem('token');
-        localStorage.removeItem('isAuthenticated');
         localStorage.removeItem('userProfile');
-        localStorage.removeItem('cartItems');
-        setIsAuthenticated(false);
         setUserProfile(null);
-        setCartCount(0);
-        setShowProfileMenu(false);
-        navigate('/login');
+        toast.success('Logged out successfully');
+        navigate('/');
     };
 
     const navItems = [

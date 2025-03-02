@@ -51,45 +51,40 @@ const Login = () => {
     }
   };
 
-  const handleSubmit = async (e) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsLoading(true);
     try {
-        const response = await fetch("https://expressjs-zpto.onrender.com/api/user/login", {
-            method: "POST",
+        const response = await fetch('https://expressjs-zpto.onrender.com/api/user/login', {
+            method: 'POST',
             headers: {
-                "Content-Type": "application/json"
+                'Content-Type': 'application/json'
             },
-            body: JSON.stringify(formData)
+            body: JSON.stringify({ email: formData.email, password: formData.password })
         });
 
         const data = await response.json();
 
-        if (response.ok && data.token) {
-            // सही डेटा सेट करें
+        if (response.ok) {
+            // Save token
             localStorage.setItem('token', data.token);
-            localStorage.setItem('userProfile', JSON.stringify(data.user));
-            localStorage.setItem('isAuthenticated', 'true');
             
-            // Events dispatch करें
-            window.dispatchEvent(new Event('userLogin'));
-            window.dispatchEvent(new Event('storage'));
-            
-            toast.success("Login successful!");
+            // Save user profile data
+            localStorage.setItem('userProfile', JSON.stringify({
+                _id: data.user._id,
+                name: data.user.name,
+                email: data.user.email,
+                // अन्य user details जो backend से आ रहे हैं
+            }));
+
+            toast.success('Login successful');
             navigate('/');
         } else {
-            toast.error(data.message || "Login failed");
+            toast.error(data.message || 'Login failed');
         }
     } catch (error) {
-        console.error("Login error:", error);
-        toast.error("Something went wrong");
-    } finally {
-        setIsLoading(false);
+        toast.error('Login failed');
     }
-};
-
+  };
 
   const handleSocialLogin = (platform) => {
     toast.success(`${platform} login coming soon!`);
@@ -171,7 +166,7 @@ const Login = () => {
           <div className="border-t border-white/20 w-full"></div>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleLogin} className="space-y-6">
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
