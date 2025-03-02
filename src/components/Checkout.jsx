@@ -3,6 +3,16 @@ import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 
+const loadRazorpay = () => {
+    return new Promise((resolve) => {
+        const script = document.createElement('script');
+        script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+        script.onload = () => resolve(true);
+        script.onerror = () => resolve(false);
+        document.body.appendChild(script);
+    });
+};
+
 const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
@@ -38,35 +48,122 @@ const Checkout = () => {
                 return;
             }
 
-            // Use the order details we received
-            const orderData = {
-                items: [{
-                    product: orderDetails.productId,
-                    seller: orderDetails.sellerId,
-                    quantity: parseInt(formData.quantity)
-                }],
-                paymentMethod: formData.paymentMethod,
-                address: formData.address
-            };
+            if (formData.paymentMethod === 'Online Payment') {
+                // Load Razorpay script
+                const isLoaded = await loadRazorpay();
+                if (!isLoaded) {
+                    toast.error('Razorpay failed to load. Please try again.');
+                    return;
+                }
 
-            const response = await fetch('https://expressjs-zpto.onrender.com/api/orders', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(orderData)
-            });
+                // Create order on your backend
+                const response = await fetch('https://expressjs-zpto.onrender.com/api/create-order', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                    },
+                    body: JSON.stringify({
+                        amount: orderDetails.price * parseInt(formData.quantity) * 100, // amount in paise
+                        currency: 'INR'
+                    })
+                });
 
-            const data = await response.json();
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.message || 'Failed to create order');
+                }
 
-            if (response.ok) {
-                // Clear the stored order details
-                localStorage.removeItem('orderDetails');
-                toast.success('Order placed successfully!');
-                navigate('/orders');
+                const options = {
+                    key: 'rzp_test_mTvqmsIEl3SpFj', // Replace with your actual test key
+                    amount: data.amount,
+                    currency: data.currency,
+                    name: 'Ayurveda Store',
+                    description: `Payment for ${orderDetails.name}`,
+                    order_id: data.id,
+                    handler: async (response) => {
+                        try {
+                            // Verify payment and create order
+                            const verifyResponse = await fetch('https://expressjs-zpto.onrender.com/api/verify-payment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    orderData: {
+                                        items: [{
+                                            product: orderDetails.productId,
+                                            seller: orderDetails.sellerId,
+                                            quantity: parseInt(formData.quantity)
+                                        }],
+                                        address: formData.address
+                                    }
+                                })
+                            });
+
+                            const verifyData = await verifyResponse.json();
+
+                            if (verifyResponse.ok) {
+                                localStorage.removeItem('orderDetails');
+                                toast.success('Payment successful! Order placed.');
+                                navigate('/orders');
+                            } else {
+                                throw new Error(verifyData.message);
+                            }
+                        } catch (error) {
+                            toast.error('Payment verification failed');
+                            console.error('Payment verification error:', error);
+                        }
+                    },
+                    prefill: {
+                        name: JSON.parse(localStorage.getItem('userProfile'))?.name || '',
+                        email: JSON.parse(localStorage.getItem('userProfile'))?.email || '',
+                    },
+                    theme: {
+                        color: '#059669'
+                    }
+                };
+
+                const razorpay = new window.Razorpay(options);
+                razorpay.open();
+                setLoading(false);
+                return;
             } else {
-                toast.error(data.message || 'Error placing order');
+                // Use the order details we received
+                const orderData = {
+                    items: [{
+                        product: orderDetails.productId,
+                        seller: orderDetails.sellerId,
+                        quantity: parseInt(formData.quantity)
+                    }],
+                    paymentMethod: formData.paymentMethod,
+                    address: formData.address
+                };
+
+                const response = await fetch('https://expressjs-zpto.onrender.com/api/orders', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(orderData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Clear the stored order details
+                    localStorage.removeItem('orderDetails');
+                    toast.success('Order placed successfully!');
+                    navigate('/orders');
+                } else {
+                    toast.error(data.message || 'Error placing order');
+                }
             }
         } catch (error) {
             console.error('Order error:', error);
