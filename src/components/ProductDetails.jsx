@@ -21,6 +21,9 @@ const ProductDetails = () => {
   const fetchProducts = async () => {
     try {
       const response = await fetch('https://expressjs-zpto.onrender.com/api/home_Products');
+      if (!response.ok) {
+        throw new Error('Failed to fetch products');
+      }
       const data = await response.json();
       if (data.products) {
         setProducts(data.products);
@@ -38,29 +41,26 @@ const ProductDetails = () => {
   // Fetch reviews
   const fetchReviews = async () => {
     try {
-        const response = await fetch(`https://expressjs-zpto.onrender.com/api/home_Products/${id}/reviews`, {
-            method: 'GET',
-            headers: {
-                'Content-Type': 'application/json'
-            }
-        });
-        
-        if (!response.ok) {
-            throw new Error('Failed to fetch reviews');
+      const response = await fetch(`https://expressjs-zpto.onrender.com/api/products/${id}/reviews`);
+      
+      if (!response.ok) {
+        if (response.status === 404) {
+          // If no reviews found, just set empty array
+          setReviews([]);
+          return;
         }
+        throw new Error('Failed to fetch reviews');
+      }
 
-        const data = await response.json();
-        console.log("Reviews data:", data); // Debug log
-        
-        if (data.reviews) {
-            setReviews(data.reviews);
-        } else {
-            setReviews([]);
-        }
+      const data = await response.json();
+      setReviews(data.reviews || []);
     } catch (error) {
-        console.error('Error fetching reviews:', error);
+      console.error('Error fetching reviews:', error);
+      // Don't show error toast for 404
+      if (!error.message.includes('404')) {
         toast.error('Failed to load reviews');
-        setReviews([]);
+      }
+      setReviews([]);
     }
   };
 
@@ -110,96 +110,112 @@ const ProductDetails = () => {
   const handleReviewSubmit = async (e) => {
     e.preventDefault();
     
+    if (!user) {
+      toast.error('Please login to add a review');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
-        toast.error('Please login to add a review');
-        navigate('/login');
-        return;
+      toast.error('Please login to add a review');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
     }
 
     if (userRating === 0) {
-        toast.error('Please select a rating');
-        return;
+      toast.error('Please select a rating');
+      return;
     }
 
     if (!userReview.trim()) {
-        toast.error('Please add a comment');
-        return;
+      toast.error('Please add a comment');
+      return;
     }
 
     setIsSubmitting(true);
     try {
-        const response = await fetch(`https://expressjs-zpto.onrender.com/api/home_Products/${id}/reviews`, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token}`
-            },
-            body: JSON.stringify({
-                rating: parseInt(userRating),
-                comment: userReview.trim()
-            })
-        });
+      const response = await fetch(`https://expressjs-zpto.onrender.com/api/products/${id}/reviews`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+          rating: parseInt(userRating),
+          comment: userReview.trim()
+        })
+      });
 
-        if (!response.ok) {
-            throw new Error('Failed to add review');
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          toast.error('Session expired. Please login again.');
+          navigate('/login', { state: { from: `/product/${id}` } });
+          return;
         }
+        throw new Error(errorData.message || 'Failed to add review');
+      }
 
-        const data = await response.json();
-        console.log("Review submit response:", data); // Debug log
-
-        if (data.success) {
-            toast.success('Review added successfully!');
-            setUserRating(0);
-            setUserReview('');
-            fetchReviews(); // Refresh reviews after adding new one
-        } else {
-            throw new Error(data.message || 'Error adding review');
-        }
-
+      const data = await response.json();
+      toast.success('Review added successfully!');
+      setUserRating(0);
+      setUserReview('');
+      fetchReviews(); // Refresh reviews
     } catch (error) {
-        console.error('Error adding review:', error);
-        toast.error(error.message || 'Failed to add review');
+      console.error('Error adding review:', error);
+      toast.error(error.message || 'Failed to add review');
     } finally {
-        setIsSubmitting(false);
+      setIsSubmitting(false);
     }
   };
 
   const handleHelpful = async (reviewId) => {
+    if (!user) {
+      toast.error('Please login to mark review as helpful');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
+
     const token = localStorage.getItem('token');
     if (!token) {
-        toast.error('Please login to mark review as helpful');
-        return;
+      toast.error('Please login to mark review as helpful');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
     }
 
     try {
-        const response = await fetch(
-            `https://expressjs-zpto.onrender.com/api/home_Products/${id}/reviews/${reviewId}/helpful`,
-            {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                }
-            }
-        );
-
-        if (!response.ok) {
-            throw new Error('Failed to mark review as helpful');
+      const response = await fetch(
+        `https://expressjs-zpto.onrender.com/api/products/${id}/reviews/${reviewId}/helpful`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          }
         }
+      );
 
-        const data = await response.json();
-        console.log("Helpful response:", data); // Debug log
-
-        if (data.success) {
-            toast.success('Review marked as helpful');
-            fetchReviews(); // Refresh reviews to show updated helpful count
-        } else {
-            throw new Error(data.message);
+      if (!response.ok) {
+        const errorData = await response.json();
+        if (response.status === 401) {
+          // Token expired or invalid
+          localStorage.removeItem('token');
+          toast.error('Session expired. Please login again.');
+          navigate('/login', { state: { from: `/product/${id}` } });
+          return;
         }
+        throw new Error(errorData.message || 'Failed to mark review as helpful');
+      }
+
+      const data = await response.json();
+      toast.success('Review marked as helpful');
+      fetchReviews(); // Refresh reviews
     } catch (error) {
-        console.error('Error marking review as helpful:', error);
-        toast.error(error.message || 'Failed to mark review as helpful');
+      console.error('Error marking review as helpful:', error);
+      toast.error(error.message || 'Failed to mark review as helpful');
     }
   };
 
@@ -214,6 +230,7 @@ const ProductDetails = () => {
           <StarRating 
             rating={userRating} 
             setRating={setUserRating}
+            size="w-6 h-6"
           />
         </div>
         <div className="mb-4">
@@ -248,37 +265,37 @@ const ProductDetails = () => {
 
   const ReviewsList = () => (
     <div className="space-y-6">
-        {!reviews || reviews.length === 0 ? (
-            <p className="text-center text-gray-500">No reviews yet. Be the first to review!</p>
-        ) : (
-            reviews.map((review) => (
-                <div key={review._id} className="border-b pb-6 last:border-b-0">
-                    <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center">
-                            <div className="mr-4">
-                                <div className="font-semibold">{review.name || 'Anonymous'}</div>
-                                <StarRating rating={review.rating} readonly />
-                            </div>
-                        </div>
-                        <div className="text-sm text-gray-500">
-                            {new Date(review.createdAt).toLocaleDateString()}
-                        </div>
-                    </div>
-                    <p className="text-gray-700">{review.comment}</p>
-                    <div className="mt-2 flex items-center">
-                        <button
-                            onClick={() => handleHelpful(review._id)}
-                            className="text-sm text-gray-500 hover:text-emerald-600 flex items-center"
-                        >
-                            <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
-                            </svg>
-                            Helpful ({review.helpful?.count || 0})
-                        </button>
-                    </div>
+      {reviews.length === 0 ? (
+        <p className="text-center text-gray-500">No reviews yet. Be the first to review!</p>
+      ) : (
+        reviews.map((review) => (
+          <div key={review._id} className="border-b pb-6 last:border-b-0">
+            <div className="flex items-center justify-between mb-2">
+              <div className="flex items-center">
+                <div className="mr-4">
+                  <div className="font-semibold">{review.name || 'Anonymous'}</div>
+                  <StarRating rating={review.rating} size="w-4 h-4" />
                 </div>
-            ))
-        )}
+              </div>
+              <div className="text-sm text-gray-500">
+                {new Date(review.createdAt).toLocaleDateString()}
+              </div>
+            </div>
+            <p className="text-gray-700 mt-2">{review.comment}</p>
+            <div className="mt-3 flex items-center">
+              <button
+                onClick={() => handleHelpful(review._id)}
+                className="text-sm text-gray-500 hover:text-emerald-600 flex items-center"
+              >
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 10h4.764a2 2 0 011.789 2.894l-3.5 7A2 2 0 0115.263 21h-4.017c-.163 0-.326-.02-.485-.06L7 20m7-10V5a2 2 0 00-2-2h-.095c-.5 0-.905.405-.905.905 0 .714-.211 1.412-.608 2.006L7 11v9m7-10h-2M7 20H5a2 2 0 01-2-2v-6a2 2 0 012-2h2.5" />
+                </svg>
+                Helpful ({review.helpful?.count || 0})
+              </button>
+            </div>
+          </div>
+        ))
+      )}
     </div>
   );
 
