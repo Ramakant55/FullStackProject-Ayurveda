@@ -1,20 +1,29 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { toast } from 'react-hot-toast';
 
 const Checkout = () => {
     const navigate = useNavigate();
+    const location = useLocation();
     const [loading, setLoading] = useState(false);
+    const [orderDetails, setOrderDetails] = useState(null);
     const [formData, setFormData] = useState({
         address: '',
         paymentMethod: 'Cash On Delivery',
-        quantity: '1'  // Added quantity field
+        quantity: '1'
     });
 
-    // For testing, you can remove these later
-    const [productId, setProductId] = useState('');
-    const [sellerId, setSellerId] = useState('');
+    useEffect(() => {
+        // Get order details from location state or localStorage
+        const details = location.state?.orderDetails || JSON.parse(localStorage.getItem('orderDetails'));
+        if (!details) {
+            toast.error('No order details found');
+            navigate('/');
+            return;
+        }
+        setOrderDetails(details);
+    }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -29,18 +38,16 @@ const Checkout = () => {
                 return;
             }
 
-            // Exact same structure as Postman
+            // Use the order details we received
             const orderData = {
                 items: [{
-                    product: productId,
-                    seller: sellerId,
-                    quantity: formData.quantity
+                    product: orderDetails.productId,
+                    seller: orderDetails.sellerId,
+                    quantity: parseInt(formData.quantity)
                 }],
                 paymentMethod: formData.paymentMethod,
                 address: formData.address
             };
-
-            console.log('Sending order data:', orderData);
 
             const response = await fetch('https://expressjs-zpto.onrender.com/api/orders', {
                 method: 'POST',
@@ -52,9 +59,10 @@ const Checkout = () => {
             });
 
             const data = await response.json();
-            console.log('Response:', data);
 
             if (response.ok) {
+                // Clear the stored order details
+                localStorage.removeItem('orderDetails');
                 toast.success('Order placed successfully!');
                 navigate('/orders');
             } else {
@@ -68,6 +76,14 @@ const Checkout = () => {
         }
     };
 
+    if (!orderDetails) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen pt-20 px-4">
             <div className="max-w-4xl mx-auto mt-8">
@@ -78,37 +94,24 @@ const Checkout = () => {
                 >
                     <h2 className="text-2xl font-semibold text-gray-800 mb-6">Checkout</h2>
 
+                    {/* Order Summary */}
+                    <div className="mb-8 p-4 bg-gray-50 rounded-lg">
+                        <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
+                        <div className="flex items-center space-x-4">
+                            <img 
+                                src={orderDetails.imageurl} 
+                                alt={orderDetails.name} 
+                                className="w-20 h-20 object-cover rounded-lg"
+                            />
+                            <div>
+                                <h4 className="font-semibold">{orderDetails.name}</h4>
+                                <p className="text-emerald-600 font-semibold">₹{orderDetails.price}</p>
+                            </div>
+                        </div>
+                    </div>
+
                     {/* Checkout Form */}
                     <form onSubmit={handleSubmit} className="space-y-6">
-                        {/* For testing - you can remove these later */}
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Product ID *
-                            </label>
-                            <input
-                                type="text"
-                                value={productId}
-                                onChange={(e) => setProductId(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Enter product ID"
-                                required
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Seller ID *
-                            </label>
-                            <input
-                                type="text"
-                                value={sellerId}
-                                onChange={(e) => setSellerId(e.target.value)}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Enter seller ID"
-                                required
-                            />
-                        </div>
-
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-2">
                                 Quantity *

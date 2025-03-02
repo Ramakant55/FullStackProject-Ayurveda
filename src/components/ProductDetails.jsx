@@ -219,6 +219,46 @@ const ProductDetails = () => {
     }
   };
 
+  const handleBuyNow = () => {
+    const token = localStorage.getItem('token');
+    const userProfile = localStorage.getItem('userProfile');
+
+    if (!token || !userProfile) {
+      toast.error('Please login to continue');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
+
+    try {
+      const userData = JSON.parse(userProfile);
+      
+      // Create order object with product details
+      const orderDetails = {
+        productId: product._id,
+        sellerId: product.seller,
+        userId: userData._id,
+        quantity: 1,
+        price: product.price,
+        name: product.name,
+        imageurl: product.imageurl
+      };
+
+      // Store order details in localStorage
+      localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
+
+      // Navigate to checkout
+      navigate('/checkout', { 
+        state: { 
+          orderDetails,
+          from: `/product/${id}`
+        }
+      });
+    } catch (error) {
+      console.error('Error processing buy now:', error);
+      toast.error('Something went wrong. Please try again.');
+    }
+  };
+
   const ReviewForm = () => (
     <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
       <h3 className="text-lg font-semibold mb-4">Add Your Review</h3>
@@ -443,16 +483,29 @@ const ProductDetails = () => {
                   </p>
                 </div>
 
-                <button
-                  onClick={() => handleAddToCart(product)}
-                  disabled={!product.inStock}
-                  className={`w-full px-4 py-3 rounded-lg text-base transition-colors
-                    ${product.inStock 
-                      ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
-                      : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
-                >
-                  {product.inStock ? 'Add to Cart' : 'Out of Stock'}
-                </button>
+                <div className="flex gap-4">
+                  <button
+                    onClick={() => handleAddToCart(product)}
+                    disabled={!product.inStock}
+                    className={`flex-1 px-4 py-3 rounded-lg text-base transition-colors
+                      ${product.inStock 
+                        ? 'bg-emerald-600 text-white hover:bg-emerald-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                  >
+                    {product.inStock ? 'Add to Cart' : 'Out of Stock'}
+                  </button>
+                  
+                  <button
+                    onClick={handleBuyNow}
+                    disabled={!product.inStock}
+                    className={`flex-1 px-4 py-3 rounded-lg text-base transition-colors
+                      ${product.inStock 
+                        ? 'bg-orange-600 text-white hover:bg-orange-700' 
+                        : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
+                  >
+                    Buy Now
+                  </button>
+                </div>
               </div>
             </div>
           </div>
