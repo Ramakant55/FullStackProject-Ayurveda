@@ -53,7 +53,6 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     if (!validateForm()) return;
 
     setIsLoading(true);
@@ -68,38 +67,24 @@ const Login = () => {
 
         const data = await response.json();
 
-        // First check if user exists
-        if (data.message === "User not found" || data.message === "User does not exist") {
-            toast.error("User not registered! Please sign up first");
-            setTimeout(() => {
-                navigate('/register');
-            }, 1500);
-            return;
-        }
-
-        // Then check for other errors
-        if (!response.ok) {
-            if (data.message === "Invalid password") {
-                toast.error("Invalid password");
-            } else {
-                toast.error(data.message || "Login failed");
-            }
-            return;
-        }
-
-        // If everything is ok, proceed with login
-        localStorage.setItem('token', data.token);
-        localStorage.setItem('userProfile', JSON.stringify(data.user));
-        window.dispatchEvent(new Event('storage'));
-
-        toast.success("Login successful!");
-        setTimeout(() => {
+        if (response.ok && data.token) {
+            // सही डेटा सेट करें
+            localStorage.setItem('token', data.token);
+            localStorage.setItem('userProfile', JSON.stringify(data.user));
+            localStorage.setItem('isAuthenticated', 'true');
+            
+            // Events dispatch करें
+            window.dispatchEvent(new Event('userLogin'));
+            window.dispatchEvent(new Event('storage'));
+            
+            toast.success("Login successful!");
             navigate('/');
-        }, 1000);
-
+        } else {
+            toast.error(data.message || "Login failed");
+        }
     } catch (error) {
         console.error("Login error:", error);
-        toast.error("Something went wrong. Please try again.");
+        toast.error("Something went wrong");
     } finally {
         setIsLoading(false);
     }

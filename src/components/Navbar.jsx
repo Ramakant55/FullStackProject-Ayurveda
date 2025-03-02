@@ -299,25 +299,28 @@ const Navbar = () => {
 
                     {/* Right Side Navigation */}
                     <div className="hidden md:flex items-center space-x-4">                        
-                        {/* Login/Register Buttons */}
-                        <div className="flex space-x-4">
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                                <Link
-                                    to="/login"
-                                    className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
-                                >
-                                    Login
-                                </Link>
-                            </motion.div>
-                            <motion.div whileHover={{ scale: 1.1 }}>
-                                <Link
-                                    to="/register"
-                                    className="bg-white text-emerald-600 border border-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors"
-                                >
-                                    Register
-                                </Link>
-                            </motion.div>
-                        </div>
+                        {isAuthenticated ? (
+                            <ProfileDropdown />
+                        ) : (
+                            <div className="flex space-x-4">
+                                <motion.div whileHover={{ scale: 1.1 }}>
+                                    <Link
+                                        to="/login"
+                                        className="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors"
+                                    >
+                                        Login
+                                    </Link>
+                                </motion.div>
+                                <motion.div whileHover={{ scale: 1.1 }}>
+                                    <Link
+                                        to="/register"
+                                        className="bg-white text-emerald-600 border border-emerald-600 px-4 py-2 rounded-lg hover:bg-emerald-50 transition-colors"
+                                    >
+                                        Register
+                                    </Link>
+                                </motion.div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Mobile menu button */}

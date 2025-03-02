@@ -4,6 +4,7 @@ import { UserIcon, CameraIcon } from '@heroicons/react/24/outline';
 import { toast, Toaster } from 'react-hot-toast';
 
 const Profile = () => {
+    const [loading, setLoading] = useState(true);
     const [profile, setProfile] = useState({
         name: '',
         email: '',
@@ -13,11 +14,13 @@ const Profile = () => {
     const [previewImage, setPreviewImage] = useState(null);
 
     useEffect(() => {
-        const savedProfile = JSON.parse(localStorage.getItem('userProfile'));
-        if (savedProfile) {
-            setProfile(savedProfile);
-            setPreviewImage(savedProfile.avatar);
+        const userProfile = localStorage.getItem('userProfile');
+        if (userProfile) {
+            const parsedProfile = JSON.parse(userProfile);
+            setProfile(parsedProfile);
+            setPreviewImage(parsedProfile.avatar);
         }
+        setLoading(false);
     }, []);
 
     const handleImageChange = (e) => {
@@ -37,6 +40,12 @@ const Profile = () => {
         localStorage.setItem('userProfile', JSON.stringify(profile));
         toast.success('Profile updated successfully!');
     };
+
+    if (loading) {
+        return <div className="min-h-screen flex items-center justify-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-emerald-500"></div>
+        </div>;
+    }
 
     return (
         <div className="min-h-screen bg-gray-50 pt-20 px-4">
