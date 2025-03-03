@@ -17,8 +17,8 @@ const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [loading, setLoading] = useState(false);
-    const [checkoutItems, setCheckoutItems] = useState([]);
     const [locationLoading, setLocationLoading] = useState(false);
+    const [checkoutItems, setCheckoutItems] = useState([]);
     const [formData, setFormData] = useState({
         address: '',
         paymentMethod: 'Cash On Delivery',
@@ -27,21 +27,35 @@ const Checkout = () => {
         verified: false
     });
 
+    useEffect(() => {
+        // Check if it's a Buy Now purchase or Cart checkout
+        const isBuyNow = location.state?.isBuyNow;
+        
+        if (isBuyNow) {
+            // Get the buy now item
+            const buyNowItem = JSON.parse(localStorage.getItem('buyNowItem'));
+            if (!buyNowItem) {
+                toast.error('Product details not found');
+                navigate('/');
+                return;
+            }
+            setCheckoutItems([buyNowItem]);
+        } else {
+            // Get cart items
+            const cartItems = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
+            if (cartItems.length === 0) {
+                toast.error('No items in cart');
+                navigate('/cart');
+                return;
+            }
+            setCheckoutItems(cartItems);
+        }
+    }, [location.state]);
+
     // Calculate total amount
     const calculateTotal = () => {
         return checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0);
     };
-
-    useEffect(() => {
-        // Get items from localStorage
-        const items = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
-        if (items.length === 0) {
-            toast.error('No items to checkout');
-            navigate('/cart');
-            return;
-        }
-        setCheckoutItems(items);
-    }, []);
 
     // Function to get current location
     const getCurrentLocation = () => {
@@ -190,8 +204,10 @@ const Checkout = () => {
                                     orderData: {
                                         items: orderItems,
                                         address: formData.address,
-                                        latitude: formData.latitude,
-                                        longitude: formData.longitude
+                                        location: {
+                                            latitude: formData.latitude,
+                                            longitude: formData.longitude
+                                        }
                                     }
                                 })
                             });
@@ -199,7 +215,8 @@ const Checkout = () => {
                             const verifyData = await verifyResponse.json();
 
                             if (verifyResponse.ok) {
-                                // Clear cart and checkout items
+                                // Clear relevant storage based on checkout type
+                                localStorage.removeItem('buyNowItem');
                                 localStorage.removeItem('checkoutItems');
                                 localStorage.removeItem('cartItems');
                                 toast.success('Payment successful! Order placed.');
@@ -244,15 +261,18 @@ const Checkout = () => {
                         items: orderItems,
                         paymentMethod: formData.paymentMethod,
                         address: formData.address,
-                        latitude: formData.latitude,
-                        longitude: formData.longitude
+                        location: {
+                            latitude: formData.latitude,
+                            longitude: formData.longitude
+                        }
                     })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Clear cart and checkout items
+                    // Clear relevant storage based on checkout type
+                    localStorage.removeItem('buyNowItem');
                     localStorage.removeItem('checkoutItems');
                     localStorage.removeItem('cartItems');
                     toast.success('Order placed successfully!');

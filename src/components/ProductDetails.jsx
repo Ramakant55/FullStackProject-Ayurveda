@@ -4,6 +4,11 @@ import { motion } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 import StarRating from './StarRating';
 import { toast } from 'react-hot-toast';
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination, Autoplay } from 'swiper/modules';
+import 'swiper/css';
+import 'swiper/css/navigation';
+import 'swiper/css/pagination';
 
 const ProductDetails = () => {
   const { id } = useParams();
@@ -232,25 +237,23 @@ const ProductDetails = () => {
     try {
       const userData = JSON.parse(userProfile);
       
-      // Create order object with product details
-      const orderDetails = {
-        productId: product._id,
+      // Create single product order
+      const buyNowItem = {
+        _id: product._id,
         sellerId: product.seller,
-        userId: userData._id,
-        quantity: 1,
-        price: product.price,
         name: product.name,
-        imageurl: product.imageurl
+        price: product.price,
+        imageurl: product.imageurl,
+        quantity: 1
       };
 
-      // Store order details in localStorage
-      localStorage.setItem('orderDetails', JSON.stringify(orderDetails));
-
-      // Navigate to checkout
+      // Store buy now item separately from cart
+      localStorage.setItem('buyNowItem', JSON.stringify(buyNowItem));
+      
+      // Navigate to checkout with buy now flag
       navigate('/checkout', { 
         state: { 
-          orderDetails,
-          from: `/product/${id}`
+          isBuyNow: true
         }
       });
     } catch (error) {
@@ -409,6 +412,7 @@ const ProductDetails = () => {
             <p className="text-emerald-600 font-bold">₹{product.price}</p>
             <button
               onClick={() => handleSimilarProductAddToCart(product)}
+              disabled={!product.inStock}
               className="mt-2 w-full bg-emerald-600 text-white py-2 rounded-lg hover:bg-emerald-700"
             >
               Add to Cart
@@ -549,35 +553,49 @@ const ProductDetails = () => {
         {similarProducts.length > 0 && (
           <div className="bg-white rounded-lg shadow-sm p-6">
             <h2 className="text-2xl font-bold mb-6">Similar Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+            <Swiper
+              modules={[Navigation, Pagination, Autoplay]}
+              spaceBetween={20}
+              slidesPerView={1}
+              navigation
+              pagination={{ clickable: true }}
+              autoplay={{ delay: 3000, disableOnInteraction: false }}
+              breakpoints={{
+                640: { slidesPerView: 2 },
+                768: { slidesPerView: 3 },
+                1024: { slidesPerView: 4 }
+              }}
+              className="similar-products-slider"
+            >
               {similarProducts.map((similarProduct) => (
-                <div
-                  key={similarProduct._id}
-                  className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => navigate(`/product/${similarProduct._id}`)}
-                >
-                  <img
-                    src={similarProduct.imageurl}
-                    alt={similarProduct.name}
-                    className="w-full h-48 object-cover rounded-lg mb-4"
-                  />
-                  <h4 className="font-semibold mb-2">{similarProduct.name}</h4>
-                  <div className="flex items-center justify-between">
-                    <span className="text-emerald-600 font-bold">₹{similarProduct.price}</span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleAddToCart(similarProduct);
-                      }}
-                      disabled={!similarProduct.inStock}
-                      className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700"
-                    >
-                      Add to Cart
-                    </button>
+                <SwiperSlide key={similarProduct._id}>
+                  <div
+                    className="bg-gray-50 p-4 rounded-lg hover:shadow-md transition-shadow cursor-pointer h-full"
+                    onClick={() => navigate(`/product/${similarProduct._id}`)}
+                  >
+                    <img
+                      src={similarProduct.imageurl}
+                      alt={similarProduct.name}
+                      className="w-full h-48 object-cover rounded-lg mb-4"
+                    />
+                    <h4 className="font-semibold mb-2 line-clamp-2">{similarProduct.name}</h4>
+                    <div className="flex items-center justify-between mt-auto">
+                      <span className="text-emerald-600 font-bold">₹{similarProduct.price}</span>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleAddToCart(similarProduct);
+                        }}
+                        disabled={!similarProduct.inStock}
+                        className="px-3 py-1 bg-emerald-600 text-white rounded-lg text-sm hover:bg-emerald-700 transition-colors"
+                      >
+                        Add to Cart
+                      </button>
+                    </div>
                   </div>
-                </div>
+                </SwiperSlide>
               ))}
-            </div>
+            </Swiper>
           </div>
         )}
       </div>
