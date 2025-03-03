@@ -83,6 +83,8 @@ const Cart = () => {
             toast.error('Your cart is empty');
             return;
         }
+        // Store all cart items in localStorage for checkout
+        localStorage.setItem('checkoutItems', JSON.stringify(cartItems));
         navigate('/checkout');
     };
 

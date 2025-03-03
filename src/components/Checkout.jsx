@@ -17,23 +17,107 @@ const Checkout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const [loading, setLoading] = useState(false);
-    const [orderDetails, setOrderDetails] = useState(null);
+    const [checkoutItems, setCheckoutItems] = useState([]);
+    const [locationLoading, setLocationLoading] = useState(false);
     const [formData, setFormData] = useState({
         address: '',
         paymentMethod: 'Cash On Delivery',
-        quantity: '1'
+        latitude: '',
+        longitude: '',
+        verified: false
     });
 
+    // Calculate total amount
+    const calculateTotal = () => {
+        return checkoutItems.reduce((total, item) => total + (item.price * item.quantity), 0);
+    };
+
     useEffect(() => {
-        // Get order details from location state or localStorage
-        const details = location.state?.orderDetails || JSON.parse(localStorage.getItem('orderDetails'));
-        if (!details) {
-            toast.error('No order details found');
-            navigate('/');
+        // Get items from localStorage
+        const items = JSON.parse(localStorage.getItem('checkoutItems') || '[]');
+        if (items.length === 0) {
+            toast.error('No items to checkout');
+            navigate('/cart');
             return;
         }
-        setOrderDetails(details);
+        setCheckoutItems(items);
     }, []);
+
+    // Function to get current location
+    const getCurrentLocation = () => {
+        setLocationLoading(true);
+        if (!navigator.geolocation) {
+            toast.error('Geolocation is not supported by your browser');
+            setLocationLoading(false);
+            return;
+        }
+
+        navigator.geolocation.getCurrentPosition(
+            async (position) => {
+                try {
+                    // Use reverse geocoding to get address from coordinates
+                    const response = await fetch(
+                        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${position.coords.latitude}&lon=${position.coords.longitude}`
+                    );
+                    const data = await response.json();
+                    
+                    setFormData({
+                        ...formData,
+                        address: data.display_name,
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        verified: true
+                    });
+                    toast.success('Location detected successfully');
+                } catch (error) {
+                    console.error('Error getting address:', error);
+                    toast.error('Failed to get address details');
+                } finally {
+                    setLocationLoading(false);
+                }
+            },
+            (error) => {
+                console.error('Error getting location:', error);
+                toast.error('Failed to get your location. Please try again or enter manually.');
+                setLocationLoading(false);
+            }
+        );
+    };
+
+    // Function to verify entered address
+    const verifyAddress = async () => {
+        if (!formData.address.trim()) {
+            toast.error('Please enter an address first');
+            return;
+        }
+
+        setLocationLoading(true);
+        try {
+            // Use geocoding to verify and standardize the address
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(formData.address)}`
+            );
+            const data = await response.json();
+
+            if (data && data[0]) {
+                setFormData({
+                    ...formData,
+                    address: data[0].display_name,
+                    latitude: data[0].lat,
+                    longitude: data[0].lon,
+                    verified: true
+                });
+                toast.success('Address verified successfully');
+            } else {
+                toast.error('Could not verify this address. Please check and try again.');
+            }
+        } catch (error) {
+            console.error('Error verifying address:', error);
+            toast.error('Failed to verify address');
+        } finally {
+            setLocationLoading(false);
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -49,22 +133,23 @@ const Checkout = () => {
             }
 
             if (formData.paymentMethod === 'Online Payment') {
-                // Load Razorpay script
                 const isLoaded = await loadRazorpay();
                 if (!isLoaded) {
                     toast.error('Razorpay failed to load. Please try again.');
                     return;
                 }
 
-                // Create order on your backend
+                const totalAmount = calculateTotal();
+                
+                // Create order on backend
                 const response = await fetch('https://expressjs-zpto.onrender.com/api/create-order', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${localStorage.getItem('token')}`
+                        'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        amount: orderDetails.price * parseInt(formData.quantity) * 100, // amount in paise
+                        amount: totalAmount * 100, // amount in paise
                         currency: 'INR'
                     })
                 });
@@ -76,32 +161,37 @@ const Checkout = () => {
                 }
 
                 const options = {
-                    key: 'rzp_test_mTvqmsIEl3SpFj', // Replace with your actual test key
+                    key: 'rzp_test_mTvqmsIEl3SpFj',
                     amount: data.amount,
                     currency: data.currency,
                     name: 'Ayurveda Store',
-                    description: `Payment for ${orderDetails.name}`,
+                    description: `Payment for ${checkoutItems.length} items`,
                     order_id: data.id,
                     handler: async (response) => {
                         try {
+                            // Prepare items for order
+                            const orderItems = checkoutItems.map(item => ({
+                                product: item._id,
+                                seller: item.sellerId,
+                                quantity: item.quantity
+                            }));
+
                             // Verify payment and create order
                             const verifyResponse = await fetch('https://expressjs-zpto.onrender.com/api/verify-payment', {
                                 method: 'POST',
                                 headers: {
                                     'Content-Type': 'application/json',
-                                    'Authorization': `Bearer ${localStorage.getItem('token')}`
+                                    'Authorization': `Bearer ${token}`
                                 },
                                 body: JSON.stringify({
                                     razorpay_order_id: response.razorpay_order_id,
                                     razorpay_payment_id: response.razorpay_payment_id,
                                     razorpay_signature: response.razorpay_signature,
                                     orderData: {
-                                        items: [{
-                                            product: orderDetails.productId,
-                                            seller: orderDetails.sellerId,
-                                            quantity: parseInt(formData.quantity)
-                                        }],
-                                        address: formData.address
+                                        items: orderItems,
+                                        address: formData.address,
+                                        latitude: formData.latitude,
+                                        longitude: formData.longitude
                                     }
                                 })
                             });
@@ -109,7 +199,9 @@ const Checkout = () => {
                             const verifyData = await verifyResponse.json();
 
                             if (verifyResponse.ok) {
-                                localStorage.removeItem('orderDetails');
+                                // Clear cart and checkout items
+                                localStorage.removeItem('checkoutItems');
+                                localStorage.removeItem('cartItems');
                                 toast.success('Payment successful! Order placed.');
                                 navigate('/orders');
                             } else {
@@ -134,31 +226,35 @@ const Checkout = () => {
                 setLoading(false);
                 return;
             } else {
-                // Use the order details we received
-                const orderData = {
-                    items: [{
-                        product: orderDetails.productId,
-                        seller: orderDetails.sellerId,
-                        quantity: parseInt(formData.quantity)
-                    }],
-                    paymentMethod: formData.paymentMethod,
-                    address: formData.address
-                };
+                // Prepare items for order
+                const orderItems = checkoutItems.map(item => ({
+                    product: item._id,
+                    seller: item.sellerId,
+                    quantity: item.quantity
+                }));
 
+                // Create order with Cash on Delivery
                 const response = await fetch('https://expressjs-zpto.onrender.com/api/orders', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'Authorization': `Bearer ${token}`
                     },
-                    body: JSON.stringify(orderData)
+                    body: JSON.stringify({
+                        items: orderItems,
+                        paymentMethod: formData.paymentMethod,
+                        address: formData.address,
+                        latitude: formData.latitude,
+                        longitude: formData.longitude
+                    })
                 });
 
                 const data = await response.json();
 
                 if (response.ok) {
-                    // Clear the stored order details
-                    localStorage.removeItem('orderDetails');
+                    // Clear cart and checkout items
+                    localStorage.removeItem('checkoutItems');
+                    localStorage.removeItem('cartItems');
                     toast.success('Order placed successfully!');
                     navigate('/orders');
                 } else {
@@ -173,7 +269,7 @@ const Checkout = () => {
         }
     };
 
-    if (!orderDetails) {
+    if (checkoutItems.length === 0) {
         return (
             <div className="min-h-screen flex items-center justify-center">
                 <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-emerald-600"></div>
@@ -194,59 +290,88 @@ const Checkout = () => {
                     {/* Order Summary */}
                     <div className="mb-8 p-4 bg-gray-50 rounded-lg">
                         <h3 className="text-lg font-semibold mb-4">Order Summary</h3>
-                        <div className="flex items-center space-x-4">
-                            <img 
-                                src={orderDetails.imageurl} 
-                                alt={orderDetails.name} 
-                                className="w-20 h-20 object-cover rounded-lg"
-                            />
-                            <div>
-                                <h4 className="font-semibold">{orderDetails.name}</h4>
-                                <p className="text-emerald-600 font-semibold">₹{orderDetails.price}</p>
+                        {checkoutItems.map((item, index) => (
+                            <div key={index} className="flex items-center space-x-4 mb-4">
+                                <img 
+                                    src={item.imageurl} 
+                                    alt={item.name} 
+                                    className="w-20 h-20 object-cover rounded-lg"
+                                />
+                                <div className="flex-1">
+                                    <h4 className="font-medium">{item.name}</h4>
+                                    <p className="text-gray-600">Quantity: {item.quantity}</p>
+                                    <p className="text-emerald-600">₹{item.price * item.quantity}</p>
+                                </div>
+                            </div>
+                        ))}
+                        <div className="mt-4 pt-4 border-t">
+                            <div className="flex justify-between">
+                                <span className="font-medium">Total Amount:</span>
+                                <span className="font-bold text-emerald-600">₹{calculateTotal()}</span>
                             </div>
                         </div>
                     </div>
 
                     {/* Checkout Form */}
-                    <form onSubmit={handleSubmit} className="space-y-6">
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Quantity *
-                            </label>
-                            <input
-                                type="number"
-                                value={formData.quantity}
-                                onChange={(e) => setFormData({...formData, quantity: e.target.value.toString()})}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                placeholder="Enter quantity"
-                                required
-                                min="1"
-                            />
+                    <form onSubmit={handleSubmit}>
+                        <div className="mb-6">
+                            <label className="block text-gray-700 mb-2">Delivery Address</label>
+                            <div className="space-y-2">
+                                <textarea
+                                    required
+                                    value={formData.address}
+                                    onChange={(e) => setFormData({ 
+                                        ...formData, 
+                                        address: e.target.value,
+                                        verified: false 
+                                    })}
+                                    className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
+                                    rows="3"
+                                    placeholder="Enter your delivery address"
+                                />
+                                <div className="flex space-x-2">
+                                    <button
+                                        type="button"
+                                        onClick={getCurrentLocation}
+                                        disabled={locationLoading}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-white font-medium ${
+                                            locationLoading 
+                                                ? 'bg-gray-400 cursor-not-allowed' 
+                                                : 'bg-blue-600 hover:bg-blue-700'
+                                        }`}
+                                    >
+                                        {locationLoading ? 'Getting Location...' : 'Use My Location'}
+                                    </button>
+                                    <button
+                                        type="button"
+                                        onClick={verifyAddress}
+                                        disabled={locationLoading || !formData.address.trim()}
+                                        className={`flex-1 py-2 px-4 rounded-lg text-white font-medium ${
+                                            locationLoading || !formData.address.trim()
+                                                ? 'bg-gray-400 cursor-not-allowed' 
+                                                : 'bg-yellow-600 hover:bg-yellow-700'
+                                        }`}
+                                    >
+                                        {locationLoading ? 'Verifying...' : 'Verify Location'}
+                                    </button>
+                                </div>
+                                {formData.verified && (
+                                    <div className="flex items-center text-green-600">
+                                        <svg className="w-5 h-5 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+                                        </svg>
+                                        <span>Location Verified</span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
 
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Delivery Address *
-                            </label>
-                            <textarea
-                                required
-                                value={formData.address}
-                                onChange={(e) => setFormData({...formData, address: e.target.value})}
-                                className="w-full px-3 py-2 border rounded-lg"
-                                rows="4"
-                                placeholder="Enter your full delivery address"
-                            />
-                        </div>
-
-                        <div>
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
-                                Payment Method *
-                            </label>
+                        <div className="mb-6">
+                            <label className="block text-gray-700 mb-2">Payment Method</label>
                             <select
-                                required
                                 value={formData.paymentMethod}
-                                onChange={(e) => setFormData({...formData, paymentMethod: e.target.value})}
-                                className="w-full px-3 py-2 border rounded-lg"
+                                onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value })}
+                                className="w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                             >
                                 <option value="Cash On Delivery">Cash On Delivery</option>
                                 <option value="Online Payment">Online Payment</option>
@@ -256,13 +381,13 @@ const Checkout = () => {
                         <button
                             type="submit"
                             disabled={loading}
-                            className={`w-full py-3 px-4 text-white rounded-lg ${
+                            className={`w-full py-3 rounded-lg text-white font-medium ${
                                 loading 
-                                    ? 'bg-gray-400 cursor-not-allowed'
+                                    ? 'bg-gray-400 cursor-not-allowed' 
                                     : 'bg-emerald-600 hover:bg-emerald-700'
                             }`}
                         >
-                            {loading ? 'Placing Order...' : 'Place Order'}
+                            {loading ? 'Processing...' : 'Place Order'}
                         </button>
                     </form>
                 </motion.div>
