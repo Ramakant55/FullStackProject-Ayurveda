@@ -450,13 +450,7 @@ const Navbar = () => {
                                         </Link>
                                     </>
                                 )}
-                                <Link
-                                    to="/seller/benefits"
-                                    className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
-                                    onClick={() => setIsOpen(false)}
-                                >
-                                    Seller Benefits
-                                </Link>
+                              
                             </div>
                         </div>
                     </motion.div>
