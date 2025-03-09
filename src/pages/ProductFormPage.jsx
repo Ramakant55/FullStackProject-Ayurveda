@@ -183,19 +183,19 @@ const ProductFormPage = () => {
                                             name="price"
                                             value={formData.price}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                            className="md:w-full w-28 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                             required
                                         />
                                     </div>
 
-                                    <div>
-                                        <label className="block text-sm font-medium text-gray-700 mb-1">Original Price</label>
+                                    <div className='md:ml-0 ml-22'>
+                                        <label className="block text-sm font-medium text-gray-700 mb-1 md:ml-0 ml-6">Original Price</label>
                                         <input
                                             type="number"
                                             name="originalPrice"
                                             value={formData.originalPrice}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                            className="md:w-full w-32 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 md:ml-0 ml-6"
                                             required
                                         />
                                     </div>
@@ -208,12 +208,12 @@ const ProductFormPage = () => {
                                             name="category"
                                             value={formData.category}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                            className="md:w-full w-28 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                             required
                                         />
                                     </div>
 
-                                    <div>
+                                    <div className='md:ml-0 ml-28'>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category</label>
                                         <input
                                             type="text"
@@ -233,13 +233,13 @@ const ProductFormPage = () => {
                                             name="quantity"
                                             value={formData.quantity}
                                             onChange={handleInputChange}
-                                            className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                            className="md:w-full w-20 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                             required
                                         />
                                     </div>
 
                                     {/* Sizes */}
-                                    <div>
+                                    <div className='md:ml-0 ml-20'>
                                         <label className="block text-sm font-medium text-gray-700 mb-1">Sizes (comma-separated)</label>
                                         <input
                                             type="text"
