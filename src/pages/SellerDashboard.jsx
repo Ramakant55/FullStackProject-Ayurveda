@@ -1,8 +1,304 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
 import { TrashIcon, PencilIcon, UserCircleIcon, ArrowRightOnRectangleIcon, UsersIcon, PlusIcon } from '@heroicons/react/24/outline';
-import { AnimatePresence, motion } from 'framer-motion';
+
+// Product form modal as a class component to prevent re-rendering issues
+class StableProductFormModal extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            formData: {
+                name: '',
+                description: '',
+                price: '',
+                originalPrice: '',
+                category: '',
+                subCategory: '',
+                quantity: 0,
+                sizes: [],
+                tags: [],
+                isBestSeller: false,
+                image: null
+            },
+            dataLoaded: false
+        };
+    }
+
+    componentDidUpdate(prevProps) {
+        // Only update form data when initialData changes and it hasn't been loaded yet
+        if (this.props.isOpen && 
+            this.props.initialData && 
+            !this.state.dataLoaded) {
+            this.setState({
+                formData: {
+                    name: this.props.initialData.name || '',
+                    description: this.props.initialData.description || '',
+                    price: this.props.initialData.price || '',
+                    originalPrice: this.props.initialData.originalPrice || '',
+                    category: this.props.initialData.category || '',
+                    subCategory: this.props.initialData.subCategory || '',
+                    quantity: this.props.initialData.quantity || 0,
+                    sizes: this.props.initialData.sizes || [],
+                    tags: this.props.initialData.tags || [],
+                    isBestSeller: this.props.initialData.isBestSeller || false,
+                    image: null
+                },
+                dataLoaded: true
+            });
+        }
+
+        // Reset the state when modal closes
+        if (prevProps.isOpen && !this.props.isOpen) {
+            this.setState({ dataLoaded: false });
+        }
+    }
+
+    handleInputChange = (e) => {
+        const { name, value, type, checked, files } = e.target;
+        
+        if (type === 'file') {
+            this.setState(prevState => ({
+                formData: { 
+                    ...prevState.formData, 
+                    image: files[0] 
+                }
+            }));
+        } else if (type === 'checkbox') {
+            this.setState(prevState => ({
+                formData: { 
+                    ...prevState.formData, 
+                    [name]: checked 
+                }
+            }));
+        } else if (name === 'sizes' || name === 'tags') {
+            this.setState(prevState => ({
+                formData: { 
+                    ...prevState.formData, 
+                    [name]: value.split(',').map(item => item.trim()) 
+                }
+            }));
+        } else {
+            this.setState(prevState => ({
+                formData: { 
+                    ...prevState.formData, 
+                    [name]: value 
+                }
+            }));
+        }
+    }
+
+    handleSubmit = (e) => {
+        e.preventDefault();
+        const formDataToSend = new FormData();
+        
+        Object.keys(this.state.formData).forEach(key => {
+            if (key === 'sizes' || key === 'tags') {
+                formDataToSend.append(key, JSON.stringify(this.state.formData[key]));
+            } else if (key === 'image' && this.state.formData[key]) {
+                formDataToSend.append('image', this.state.formData[key]);
+            } else {
+                formDataToSend.append(key, this.state.formData[key]);
+            }
+        });
+        
+        this.props.onSubmit(formDataToSend);
+    }
+
+    render() {
+        const { isOpen, onClose, mode, isLoading } = this.props;
+        const { formData } = this.state;
+        
+        if (!isOpen) return null;
+        
+        return (
+            <div className="fixed inset-0 z-[100] overflow-y-auto">
+                <div 
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                    onClick={onClose}
+                ></div>
+                <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
+                    <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
+                        <div className="p-6 bg-emerald-50">
+                            <h2 className="text-2xl font-bold text-emerald-800">
+                                {mode === 'add' ? 'Add New Product' : 'Edit Product'}
+                            </h2>
+                        </div>
+
+                        <form onSubmit={this.handleSubmit} className="p-6 space-y-4">
+                            <div className="grid grid-cols-2 gap-4">
+                                {/* Basic Info */}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
+                                    <input
+                                        type="text"
+                                        name="name"
+                                        value={formData.name}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Prices */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
+                                    <input
+                                        type="number"
+                                        name="price"
+                                        value={formData.price}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Original Price</label>
+                                    <input
+                                        type="number"
+                                        name="originalPrice"
+                                        value={formData.originalPrice}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Categories */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                                    <input
+                                        type="text"
+                                        name="category"
+                                        value={formData.category}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category</label>
+                                    <input
+                                        type="text"
+                                        name="subCategory"
+                                        value={formData.subCategory}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                </div>
+
+                                {/* Inventory */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
+                                    <input
+                                        type="number"
+                                        name="quantity"
+                                        value={formData.quantity}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    />
+                                </div>
+
+                                {/* Image Upload */}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
+                                    <input
+                                        type="file"
+                                        name="image"
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        accept="image/*"
+                                    />
+                                </div>
+
+                                {/* Description */}
+                                <div className="col-span-2">
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                                    <textarea
+                                        name="description"
+                                        value={formData.description}
+                                        onChange={this.handleInputChange}
+                                        rows="4"
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        required
+                                    ></textarea>
+                                </div>
+
+                                {/* Optional Fields */}
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Sizes (comma separated)</label>
+                                    <input
+                                        type="text"
+                                        name="sizes"
+                                        value={formData.sizes.join(', ')}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">e.g. S, M, L, XL</p>
+                                </div>
+
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma separated)</label>
+                                    <input
+                                        type="text"
+                                        name="tags"
+                                        value={formData.tags.join(', ')}
+                                        onChange={this.handleInputChange}
+                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                    />
+                                    <p className="mt-1 text-xs text-gray-500">e.g. new, organic, premium</p>
+                                </div>
+
+                                <div className="col-span-2">
+                                    <label className="flex items-center space-x-2">
+                                        <input
+                                            type="checkbox"
+                                            name="isBestSeller"
+                                            checked={formData.isBestSeller}
+                                            onChange={this.handleInputChange}
+                                            className="h-4 w-4 text-emerald-600 focus:ring-emerald-500 border-gray-300 rounded"
+                                        />
+                                        <span className="text-sm font-medium text-gray-700">Mark as Best Seller</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="flex justify-end space-x-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={onClose}
+                                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
+                                    disabled={isLoading}
+                                >
+                                    {isLoading ? (
+                                        <>
+                                            <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                            </svg>
+                                            Processing...
+                                        </>
+                                    ) : (
+                                        mode === 'add' ? 'Add Product' : 'Update Product'
+                                    )}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        );
+    }
+}
 
 const SellerDashboard = () => {
     const navigate = useNavigate();
@@ -72,11 +368,87 @@ const SellerDashboard = () => {
     };
 
     const handleAddProduct = () => {
-        navigate('/add-product');
+        setIsEditing(false);
+        setEditingProduct(null);
+        setNewProduct({
+            name: '',
+            description: '',
+            price: '',
+            originalPrice: '',
+            category: '',
+            subCategory: '',
+            imageurl: '',
+            quantity: '',
+            seller: '',
+            sizes: [],
+            tags: [],
+            isBestSeller: false,
+            inStock: true
+        });
+        setShowAddProduct(true);
+    };
+
+    const handleCreateProduct = async (formData) => {
+        setIsLoading(true);
+        try {
+            const token = localStorage.getItem('sellerToken');
+            const response = await fetch('https://expressjs-zpto.onrender.com/api/products', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                },
+                body: formData
+            });
+            
+            if (response.ok) {
+                toast.success('Product added successfully');
+                setShowAddProduct(false);
+                setNewProduct({
+                    name: '',
+                    description: '',
+                    price: '',
+                    originalPrice: '',
+                    category: '',
+                    subCategory: '',
+                    imageurl: '',
+                    quantity: '',
+                    seller: '',
+                    sizes: [],
+                    tags: [],
+                    isBestSeller: false,
+                    inStock: true
+                });
+                fetchProducts(); // Refresh product list
+            } else {
+                const data = await response.json();
+                toast.error(data.message || 'Failed to add product');
+            }
+        } catch (error) {
+            console.error('Error adding product:', error);
+            toast.error('Error adding product');
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleEditProduct = (product) => {
-        navigate(`/edit-product/${product._id}`, { state: { product } });
+        setEditingProduct(product);
+        setNewProduct({
+            name: product.name,
+            description: product.description,
+            price: product.price,
+            originalPrice: product.originalPrice || '',
+            category: product.category,
+            subCategory: product.subCategory || '',
+            quantity: product.quantity || 0,
+            imageurl: product.imageurl,
+            sizes: product.sizes || [],
+            tags: product.tags || [],
+            isBestSeller: product.isBestSeller || false,
+            inStock: product.inStock || true
+        });
+        setIsEditing(true);
+        setShowAddProduct(true);
     };
 
     const handleDeleteProduct = async (productId) => {
@@ -102,44 +474,61 @@ const SellerDashboard = () => {
         }
     };
 
-    const handleEditClick = (product) => {
-        setEditingProduct(product);
-        setNewProduct({
-            name: product.name,
-            description: product.description,
-            price: product.price,
-            category: product.category,
-            stock: product.stock,
-            image: product.image,
-        });
-        setIsEditing(true);
-    };
-
-    const handleUpdateProduct = async (e) => {
-        e.preventDefault();
+    const handleUpdateProduct = async (formData) => {
         setIsLoading(true);
         try {
             const token = localStorage.getItem('sellerToken');
+            
+            // Convert FormData to regular JSON data
+            const jsonData = {};
+            for (let [key, value] of formData.entries()) {
+                // Try to parse JSON strings (like arrays)
+                if (key === 'sizes' || key === 'tags') {
+                    try {
+                        jsonData[key] = JSON.parse(value);
+                    } catch (e) {
+                        jsonData[key] = value;
+                    }
+                } else {
+                    jsonData[key] = value;
+                }
+            }
+            
+            // Skip the image if it's empty or not changed
+            if (formData.get('image') instanceof File && formData.get('image').size > 0) {
+                // If there's a new image, we'd need multipart/form-data handling
+                // For now, we'll proceed without image updates
+                console.log("Image updates are not supported in this edit");
+            }
+            
             const response = await fetch(`https://expressjs-zpto.onrender.com/api/products/${editingProduct._id}`, {
-                method: 'PUT',
+                method: 'PATCH',
                 headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(newProduct)
+                body: JSON.stringify(jsonData)
             });
             
             if (response.ok) {
                 toast.success('Product updated successfully');
                 setIsEditing(false);
                 setEditingProduct(null);
+                setShowAddProduct(false);
                 setNewProduct({
                     name: '',
                     description: '',
                     price: '',
+                    originalPrice: '',
                     category: '',
-                    stock: '',
-                    image: '',
+                    subCategory: '',
+                    imageurl: '',
+                    quantity: '',
+                    seller: '',
+                    sizes: [],
+                    tags: [],
+                    isBestSeller: false,
+                    inStock: true
                 });
                 fetchProducts(); // Refresh product list
             } else {
@@ -199,253 +588,6 @@ const SellerDashboard = () => {
             fetchSellers();
         }
     }, [sellerInfo]);
-
-    const ProductFormModal = ({ isOpen, onClose, mode, initialData, onSubmit, isLoading }) => {
-        const [formData, setFormData] = useState({
-            name: initialData?.name || '',
-            description: initialData?.description || '',
-            price: initialData?.price || '',
-            originalPrice: initialData?.originalPrice || '',
-            category: initialData?.category || '',
-            subCategory: initialData?.subCategory || '',
-            quantity: initialData?.quantity || 0,
-            sizes: initialData?.sizes || [],
-            tags: initialData?.tags || [],
-            isBestSeller: initialData?.isBestSeller || false,
-            image: null
-        });
-
-        const handleInputChange = (e) => {
-            const { name, value, type, checked, files } = e.target;
-            if (type === 'file') {
-                setFormData(prev => ({ ...prev, image: files[0] }));
-            } else if (type === 'checkbox') {
-                setFormData(prev => ({ ...prev, [name]: checked }));
-            } else if (name === 'sizes' || name === 'tags') {
-                setFormData(prev => ({ ...prev, [name]: value.split(',').map(item => item.trim()) }));
-            } else {
-                setFormData(prev => ({ ...prev, [name]: value }));
-            }
-        };
-
-        const handleSubmit = async (e) => {
-            e.preventDefault();
-            const formDataToSend = new FormData();
-            
-            // Append all form fields
-            Object.keys(formData).forEach(key => {
-                if (key === 'sizes' || key === 'tags') {
-                    formDataToSend.append(key, JSON.stringify(formData[key]));
-                } else if (key === 'image' && formData[key]) {
-                    formDataToSend.append('image', formData[key]);
-                } else {
-                    formDataToSend.append(key, formData[key]);
-                }
-            });
-
-            onSubmit(formDataToSend);
-        };
-
-        return (
-            <AnimatePresence>
-                {isOpen && (
-                    <div className="fixed inset-0 z-[100]">
-                        <motion.div
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            exit={{ opacity: 0 }}
-                            className="fixed inset-0 bg-black/50 backdrop-blur-sm"
-                            onClick={onClose}
-                        />
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl"
-                        >
-                            <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                                <div className="p-6 bg-emerald-50">
-                                    <h2 className="text-2xl font-bold text-emerald-800">
-                                        {mode === 'add' ? 'Add New Product' : 'Edit Product'}
-                                    </h2>
-                                </div>
-
-                                <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                                    <div className="grid grid-cols-2 gap-4">
-                                        {/* Basic Info */}
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
-                                            <input
-                                                type="text"
-                                                name="name"
-                                                value={formData.name}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Prices */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Price</label>
-                                            <input
-                                                type="number"
-                                                name="price"
-                                                value={formData.price}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Original Price</label>
-                                            <input
-                                                type="number"
-                                                name="originalPrice"
-                                                value={formData.originalPrice}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Categories */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
-                                            <input
-                                                type="text"
-                                                name="category"
-                                                value={formData.category}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Sub Category</label>
-                                            <input
-                                                type="text"
-                                                name="subCategory"
-                                                value={formData.subCategory}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        {/* Quantity and Image */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Quantity</label>
-                                            <input
-                                                type="number"
-                                                name="quantity"
-                                                value={formData.quantity}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
-                                            <input
-                                                type="file"
-                                                name="image"
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                accept="image/*"
-                                                required={mode === 'add'}
-                                            />
-                                        </div>
-
-                                        {/* Sizes and Tags */}
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Sizes (comma-separated)</label>
-                                            <input
-                                                type="text"
-                                                name="sizes"
-                                                value={formData.sizes.join(', ')}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                placeholder="S, M, L, XL"
-                                            />
-                                        </div>
-
-                                        <div>
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Tags (comma-separated)</label>
-                                            <input
-                                                type="text"
-                                                name="tags"
-                                                value={formData.tags.join(', ')}
-                                                onChange={handleInputChange}
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                placeholder="casual, summer, trendy"
-                                            />
-                                        </div>
-
-                                        {/* Best Seller Checkbox */}
-                                        <div className="col-span-2">
-                                            <label className="flex items-center space-x-2">
-                                                <input
-                                                    type="checkbox"
-                                                    name="isBestSeller"
-                                                    checked={formData.isBestSeller}
-                                                    onChange={handleInputChange}
-                                                    className="rounded text-emerald-600 focus:ring-emerald-500"
-                                                />
-                                                <span className="text-sm font-medium text-gray-700">Mark as Best Seller</span>
-                                            </label>
-                                        </div>
-
-                                        {/* Description */}
-                                        <div className="col-span-2">
-                                            <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
-                                            <textarea
-                                                name="description"
-                                                value={formData.description}
-                                                onChange={handleInputChange}
-                                                rows="4"
-                                                className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
-                                                required
-                                            />
-                                        </div>
-                                    </div>
-
-                                    {/* Form Actions */}
-                                    <div className="flex justify-end space-x-3 pt-4 border-t">
-                                        <button
-                                            type="button"
-                                            onClick={onClose}
-                                            className="px-6 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
-                                        >
-                                            Cancel
-                                        </button>
-                                        <button
-                                            type="submit"
-                                            disabled={isLoading}
-                                            className="px-6 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
-                                        >
-                                            {isLoading ? (
-                                                <>
-                                                    <svg className="animate-spin -ml-1 mr-2 h-5 w-5" viewBox="0 0 24 24">
-                                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                                                    </svg>
-                                                    Processing...
-                                                </>
-                                            ) : mode === 'add' ? 'Add Product' : 'Update Product'}
-                                        </button>
-                                    </div>
-                                </form>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
-        );
-    };
 
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-emerald-50">
@@ -613,6 +755,23 @@ const SellerDashboard = () => {
                     )}
                 </div>
             </div>
+            <StableProductFormModal
+                isOpen={showAddProduct}
+                onClose={() => {
+                    setShowAddProduct(false);
+                    // Allow animations to complete before resetting state
+                    setTimeout(() => {
+                        if (isEditing) {
+                            setIsEditing(false);
+                            setEditingProduct(null);
+                        }
+                    }, 300);
+                }}
+                mode={isEditing ? 'edit' : 'add'}
+                initialData={isEditing ? newProduct : null}
+                onSubmit={isEditing ? handleUpdateProduct : handleCreateProduct}
+                isLoading={isLoading}
+            />
         </div>
     );
 };
