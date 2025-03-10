@@ -21,6 +21,7 @@ import { Toaster } from 'react-hot-toast';
 import AboutUs from './components/AboutUs';
 import ProtectedRoute from './components/ProtectedRoute';
 import { AuthProvider } from './context/AuthContext';
+import { SellerAuthProvider } from './context/SellerAuthContext';
 import ProductDetails from './components/ProductDetails';
 import { createContext } from 'react';
 
@@ -68,43 +69,45 @@ function App() {
 
   return (
     <AuthProvider>
-      <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, userProfile, setUserProfile }}>
-        <Router>
-          <Scrolltop />
-          <div className="flex flex-col min-h-screen">
-            <Navbar />
-            <Toaster position="top-center" reverseOrder={false} />
-            <main className="flex-grow pt-16">
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/register" element={<Register />} />
-                <Route path="/verify-otp" element={<VerifyOtp />} />
-                <Route path="/products" element={<Products />} />
-                <Route path="/contact" element={<Contact />} />
-                <Route path="/cart" element={<Cart />} />
-                <Route path="/checkout" element={<Checkout />} />
-                <Route path="/profile" element={
-                    <ProtectedRoute>
-                        <Profile />
-                    </ProtectedRoute>
-                } />
-                <Route path="/seller/login" element={<SellerLogin />} />
-                <Route path="/seller/register" element={<SellerRegister />} />
-                <Route path="/seller/dashboard" element={<SellerDashboard />} />
-                <Route path="/seller/verify-otp" element={<SellerVerifyOTP />} />
-                <Route path="/add-product" element={<ProductFormPage mode="add" />} />
-                <Route path="/edit-product/:id" element={<ProductFormPage mode="edit" />} />
-                <Route path="/about" element={<AboutUs />} />
-                <Route path="/product/:id" element={<ProductDetails />} />
-                {/* Catch all route - redirect to home */}
-                <Route path="*" element={<Navigate to="/" replace />} />
-              </Routes>
-            </main>
-            <Footer />
-          </div>
-        </Router>
-      </AuthContext.Provider>
+      <SellerAuthProvider>
+        <AuthContext.Provider value={{ isAuthenticated, setIsAuthenticated, userProfile, setUserProfile }}>
+          <Router>
+            <Scrolltop />
+            <div className="flex flex-col min-h-screen">
+              <Navbar />
+              <Toaster position="top-center" reverseOrder={false} />
+              <main className="flex-grow pt-16">
+                <Routes>
+                  <Route path="/" element={<Home />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/register" element={<Register />} />
+                  <Route path="/verify-otp" element={<VerifyOtp />} />
+                  <Route path="/products" element={<Products />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/cart" element={<Cart />} />
+                  <Route path="/checkout" element={<Checkout />} />
+                  <Route path="/profile" element={
+                      <ProtectedRoute>
+                          <Profile />
+                      </ProtectedRoute>
+                  } />
+                  <Route path="/seller/login" element={<SellerLogin />} />
+                  <Route path="/seller/register" element={<SellerRegister />} />
+                  <Route path="/seller/dashboard" element={<SellerDashboard />} />
+                  <Route path="/seller/verify-otp" element={<SellerVerifyOTP />} />
+                  <Route path="/add-product" element={<ProductFormPage mode="add" />} />
+                  <Route path="/edit-product/:id" element={<ProductFormPage mode="edit" />} />
+                  <Route path="/about" element={<AboutUs />} />
+                  <Route path="/product/:id" element={<ProductDetails />} />
+                  {/* Catch all route - redirect to home */}
+                  <Route path="*" element={<Navigate to="/" replace />} />
+                </Routes>
+              </main>
+              <Footer />
+            </div>
+          </Router>
+        </AuthContext.Provider>
+      </SellerAuthProvider>
     </AuthProvider>
   );
 }

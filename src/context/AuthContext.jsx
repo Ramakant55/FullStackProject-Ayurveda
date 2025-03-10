@@ -11,29 +11,45 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Check localStorage for user data on initial load
-    const userData = localStorage.getItem('user');
-    if (userData) {
-      setUser(JSON.parse(userData));
+    // Check localStorage for user data and token on initial load
+    const userProfile = localStorage.getItem('userProfile');
+    const token = localStorage.getItem('token');
+    
+    if (userProfile && token) {
+      try {
+        setUser(JSON.parse(userProfile));
+      } catch (error) {
+        console.error('Failed to parse user data:', error);
+        // If there's an error parsing user data, clear it
+        localStorage.removeItem('userProfile');
+        localStorage.removeItem('token');
+      }
     }
     setLoading(false);
   }, []);
 
-  const login = (userData) => {
+  const login = (userData, token) => {
     setUser(userData);
-    localStorage.setItem('user', JSON.stringify(userData));
+    // Store both the user data and token in localStorage
+    localStorage.setItem('userProfile', JSON.stringify(userData));
+    localStorage.setItem('token', token);
   };
 
   const logout = () => {
     setUser(null);
-    localStorage.removeItem('user');
+    // Clear both user data and token from localStorage
+    localStorage.removeItem('userProfile');
+    localStorage.removeItem('token');
+    localStorage.removeItem('user'); // Clear any old format data as well
   };
 
   const value = {
     user,
     login,
     logout,
-    loading
+    loading,
+    // Add a getter for token to make it accessible throughout the app
+    getToken: () => localStorage.getItem('token')
   };
 
   return (
@@ -41,4 +57,4 @@ export const AuthProvider = ({ children }) => {
       {!loading && children}
     </AuthContext.Provider>
   );
-}; 
+};

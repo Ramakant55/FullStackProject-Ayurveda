@@ -9,9 +9,11 @@ import {
 import { FaGoogle, FaFacebook, FaGithub } from 'react-icons/fa';
 import { Toaster, toast } from "react-hot-toast";
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
 
 const Login = () => {
   const navigate = useNavigate();
+  const { login } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
@@ -53,6 +55,12 @@ const Login = () => {
 
   const handleLogin = async (e) => {
     e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsLoading(true);
     try {
         const response = await fetch('https://expressjs-zpto.onrender.com/api/user/login', {
             method: 'POST',
@@ -63,26 +71,53 @@ const Login = () => {
         });
 
         const data = await response.json();
+        console.log('Login response:', data); // Debug login response
 
         if (response.ok) {
-            // Save token
-            localStorage.setItem('token', data.token);
-            
-            // Save user profile data
-            localStorage.setItem('userProfile', JSON.stringify({
-                _id: data.user._id,
-                name: data.user.name,
-                email: data.user.email,
-                // अन्य user details जो backend से आ रहे हैं
-            }));
+            // Check the structure of user data carefully
+            if (!data.user) {
+                console.error('No user object in response:', data);
+                throw new Error('Invalid response: Missing user data');
+            }
 
+            // Log the exact structure of the user object to debug
+            console.log('User data structure:', JSON.stringify(data.user));
+
+            // Ensure user data has all required fields (server returns 'id', not '_id')
+            const userData = {
+                _id: data.user.id, // Server is returning 'id', not '_id'
+                name: data.user.name || 'User',
+                email: data.user.email || formData.email
+            };
+            
+            console.log('Constructed user data:', userData);
+            
+            // Validate that we have a proper user ID
+            if (!userData._id) {
+                console.error('Missing ID in user data. Using userId from token if available');
+                // Try to extract userId from token payload or response
+                const tokenPayload = data.token.split('.')[1];
+                try {
+                    const decoded = JSON.parse(atob(tokenPayload));
+                    userData._id = decoded.userId || 'temp-' + Date.now();
+                } catch (e) {
+                    userData._id = 'temp-' + Date.now();
+                }
+            }
+            
+            // Pass userData and token to the login function
+            login(userData, data.token);
+            
             toast.success('Login successful');
             navigate('/');
         } else {
             toast.error(data.message || 'Login failed');
         }
     } catch (error) {
-        toast.error('Login failed');
+        console.error('Login error:', error);
+        toast.error('Login failed. Please try again.');
+    } finally {
+        setIsLoading(false);
     }
   };
 

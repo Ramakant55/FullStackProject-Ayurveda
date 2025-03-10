@@ -13,7 +13,7 @@ import 'swiper/css/pagination';
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, getToken } = useAuth();
   const [product, setProduct] = useState(null);
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -21,6 +21,26 @@ const ProductDetails = () => {
   const [userRating, setUserRating] = useState(0);
   const [userReview, setUserReview] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  // Keep token state in sync with localStorage
+  useEffect(() => {
+    const refreshToken = () => {
+      const token = getToken();
+      if (!token) {
+        localStorage.removeItem('token');
+      }
+    };
+    
+    // Listen for storage events (like token changes)
+    window.addEventListener('storage', refreshToken);
+    
+    // Refresh token when component mounts
+    refreshToken();
+    
+    return () => {
+      window.removeEventListener('storage', refreshToken);
+    };
+  }, []);
 
   // Fetch product and similar products
   const fetchProducts = async () => {
@@ -112,66 +132,120 @@ const ProductDetails = () => {
     }
   };
 
-  const handleReviewSubmit = async (e) => {
+  const handleReviewSubmit = async (e, formData = null) => {
     e.preventDefault();
     
+    // Use either form data passed from the child component or the main component state
+    const rating = formData ? formData.rating : userRating;
+    const comment = formData ? formData.comment : userReview;
+    
+    // Check if user exists in context
     if (!user) {
       toast.error('Please login to add a review');
       navigate('/login', { state: { from: `/product/${id}` } });
       return;
     }
 
-    const token = localStorage.getItem('token');
-    if (!token) {
-      toast.error('Please login to add a review');
+    // Check if user ID exists
+    if (!user._id) {
+      toast.error('User profile incomplete. Please logout and login again.');
       navigate('/login', { state: { from: `/product/${id}` } });
       return;
     }
 
-    if (userRating === 0) {
+    // Get the fresh token directly from AuthContext
+    const token = getToken();
+    if (!token) {
+      toast.error('Your session appears to have expired. Please login again.');
+      navigate('/login', { state: { from: `/product/${id}` } });
+      return;
+    }
+
+    if (rating === 0) {
       toast.error('Please select a rating');
       return;
     }
 
-    if (!userReview.trim()) {
+    if (!comment || !comment.trim()) {
       toast.error('Please add a comment');
       return;
     }
 
     setIsSubmitting(true);
     try {
+      // Create a clean review object
+      const reviewData = {
+        rating: parseInt(rating),
+        comment: comment.trim()
+      };
+      
+      console.log('Submitting review with data:', {
+        productId: id,
+        ...reviewData
+      });
+      
+      // Log current authentication state for debugging
+      console.log('Auth State:', { 
+        isLoggedIn: !!user, 
+        userId: user?._id,
+        hasToken: !!token,
+        tokenPrefix: token ? token.substring(0, 5) : null
+      });
+      
       const response = await fetch(`https://expressjs-zpto.onrender.com/api/products/${id}/reviews`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify({
-          rating: parseInt(userRating),
-          comment: userReview.trim()
-        })
+        body: JSON.stringify(reviewData)
       });
 
+      console.log('Review submission response status:', response.status);
+      
+      // Try to parse response as JSON, but handle case where it's not valid JSON
+      let responseData = {};
+      try {
+        responseData = await response.json();
+        console.log('Review submission response data:', responseData);
+      } catch (jsonError) {
+        console.error('Failed to parse response as JSON:', jsonError);
+      }
+
       if (!response.ok) {
-        const errorData = await response.json();
         if (response.status === 401) {
           // Token expired or invalid
-          localStorage.removeItem('token');
           toast.error('Session expired. Please login again.');
           navigate('/login', { state: { from: `/product/${id}` } });
           return;
+        } else if (response.status === 400) {
+          // Validation error or user already reviewed
+          toast.error(responseData.message || 'Invalid review data');
+          return;
+        } else if (response.status === 500) {
+          // Server error
+          console.error('Server error details:', responseData.error);
+          toast.error('Server error occurred. Please try again later or try refreshing the page.');
+          
+          // If it's a validation error, we can give more specific feedback
+          if (responseData.error && responseData.error.includes('ValidationError')) {
+            toast.error('There was an issue with your review. Please try logging out and back in.');
+          }
+          return;
         }
-        throw new Error(errorData.message || 'Failed to add review');
+        throw new Error(responseData.message || `Failed to add review (Status: ${response.status})`);
       }
 
-      const data = await response.json();
       toast.success('Review added successfully!');
+      
+      // Reset both the main component state and the form component will reset on re-render
       setUserRating(0);
       setUserReview('');
+      
       fetchReviews(); // Refresh reviews
     } catch (error) {
       console.error('Error adding review:', error);
-      toast.error(error.message || 'Failed to add review');
+      toast.error(error.message || 'Failed to add review. Please try logging out and back in.');
     } finally {
       setIsSubmitting(false);
     }
@@ -184,7 +258,7 @@ const ProductDetails = () => {
       return;
     }
 
-    const token = localStorage.getItem('token');
+    const token = getToken();
     if (!token) {
       toast.error('Please login to mark review as helpful');
       navigate('/login', { state: { from: `/product/${id}` } });
@@ -207,7 +281,6 @@ const ProductDetails = () => {
         const errorData = await response.json();
         if (response.status === 401) {
           // Token expired or invalid
-          localStorage.removeItem('token');
           toast.error('Session expired. Please login again.');
           navigate('/login', { state: { from: `/product/${id}` } });
           return;
@@ -225,7 +298,7 @@ const ProductDetails = () => {
   };
 
   const handleBuyNow = () => {
-    const token = localStorage.getItem('token');
+    const token = getToken();
     const userProfile = localStorage.getItem('userProfile');
 
     if (!token || !userProfile) {
@@ -262,49 +335,68 @@ const ProductDetails = () => {
     }
   };
 
-  const ReviewForm = () => (
-    <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
-      <h3 className="text-lg font-semibold mb-4">Add Your Review</h3>
-      <form onSubmit={handleReviewSubmit}>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Rating <span className="text-red-500">*</span>
-          </label>
-          <StarRating 
-            rating={userRating} 
-            setRating={setUserRating}
-            size="w-6 h-6"
-          />
-        </div>
-        <div className="mb-4">
-          <label className="block text-sm font-medium text-gray-700 mb-2">
-            Your Review <span className="text-red-500">*</span>
-          </label>
-          <textarea
-            value={userReview}
-            onChange={(e) => setUserReview(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
-            rows="4"
-            placeholder="Write your review here..."
-            required
-            minLength="10"
-            maxLength="500"
-          />
-          <p className="text-sm text-gray-500 mt-1">
-            {userReview.length}/500 characters
-          </p>
-        </div>
-        <button
-          type="submit"
-          disabled={isSubmitting || userRating === 0 || !userReview.trim()}
-          className={`w-full bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-700 transition-colors
-            ${(isSubmitting || userRating === 0 || !userReview.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
-        >
-          {isSubmitting ? 'Submitting...' : 'Submit Review'}
-        </button>
-      </form>
-    </div>
-  );
+  const ReviewForm = () => {
+    // Local state for form inputs
+    const [reviewText, setReviewText] = useState('');
+    const [reviewRating, setReviewRating] = useState(0);
+    
+    // Handle form submission
+    const submitReview = (e) => {
+      e.preventDefault();
+      
+      // Pass the form values to the parent handler
+      handleReviewSubmit(e, {
+        rating: reviewRating,
+        comment: reviewText
+      });
+    };
+    
+    return (
+      <div className="mt-8 bg-white p-6 rounded-lg shadow-md">
+        <h3 className="text-lg font-semibold mb-4">Add Your Review</h3>
+        <form onSubmit={submitReview}>
+          <div className="mb-4">
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Your Rating <span className="text-red-500">*</span>
+            </label>
+            <StarRating 
+              rating={reviewRating} 
+              setRating={setReviewRating}
+              size="w-6 h-6"
+            />
+          </div>
+          <div className="mb-4">
+            <label htmlFor="review-text" className="block text-sm font-medium text-gray-700 mb-2">
+              Your Review <span className="text-red-500">*</span>
+            </label>
+            <textarea
+              id="review-text"
+              value={reviewText}
+              onChange={(e) => setReviewText(e.target.value)}
+              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-emerald-500"
+              rows="4"
+              placeholder="Write your review here..."
+              required
+              minLength="10"
+              maxLength="500"
+              style={{ resize: 'vertical' }}
+            />
+            <p className="text-sm text-gray-500 mt-1">
+              {reviewText.length}/500 characters
+            </p>
+          </div>
+          <button
+            type="submit"
+            disabled={isSubmitting || reviewRating === 0 || !reviewText.trim()}
+            className={`w-full bg-emerald-600 text-white py-2 px-4 rounded-md hover:bg-emerald-700 transition-colors
+              ${(isSubmitting || reviewRating === 0 || !reviewText.trim()) ? 'opacity-50 cursor-not-allowed' : ''}`}
+          >
+            {isSubmitting ? 'Submitting...' : 'Submit Review'}
+          </button>
+        </form>
+      </div>
+    );
+  };
 
   const ReviewsList = () => (
     <div className="space-y-6">

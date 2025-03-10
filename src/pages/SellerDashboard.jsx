@@ -391,14 +391,71 @@ const SellerDashboard = () => {
     const handleCreateProduct = async (formData) => {
         setIsLoading(true);
         try {
-            const token = localStorage.getItem('sellerToken');
-            const response = await fetch('https://expressjs-zpto.onrender.com/api/products', {
+            // Try to get the token from local storage
+            let token = localStorage.getItem('sellerToken');
+            
+            // If sellerToken isn't available, try to use the regular user token
+            if (!token) {
+                token = localStorage.getItem('token');
+                console.log('Using user token instead of seller token');
+            }
+            
+            if (!token) {
+                toast.error('Authentication required. Please log in again.');
+                navigate('/seller/login');
+                return;
+            }
+
+            // Get seller information from local storage
+            const sellerInfo = JSON.parse(localStorage.getItem('sellerInfo')) || {};
+            const user = JSON.parse(localStorage.getItem('userProfile')) || {};
+            const sellerId = sellerInfo._id || sellerInfo.userId || user._id;
+            
+            if (!sellerId) {
+                toast.error('Seller information is missing. Please log in again as a seller.');
+                navigate('/seller/login');
+                return;
+            }
+            
+            // Add seller ID to form data
+            formData.append('seller', sellerId);
+            
+            // console.log('Using token (first 10 chars):', token.substring(0, 10));
+            // console.log('Using seller ID:', sellerId);
+            
+            // Log the form data contents for debugging
+            const formDataEntries = [];
+            for (let pair of formData.entries()) {
+                // Don't log the full image data
+                if (pair[0] === 'image') {
+                    formDataEntries.push([pair[0], 'Image file present']);
+                } else {
+                    formDataEntries.push(pair);
+                }
+            }
+            // console.log('Form data being sent:', formDataEntries);
+            
+            // Try using the local server first (make sure it's running locally)
+            const serverUrl = 'https://expressjs-zpto.onrender.com/api/products';
+            console.log('Sending request to:', serverUrl);
+            
+            const response = await fetch(serverUrl, {
                 method: 'POST',
                 headers: {
                     'Authorization': `Bearer ${token}`
                 },
                 body: formData
             });
+            
+            console.log('Response status:', response.status);
+            
+            let responseData;
+            try {
+                responseData = await response.json();
+                console.log('Response data:', responseData);
+            } catch (e) {
+                console.log('Failed to parse response as JSON:', e);
+            }
             
             if (response.ok) {
                 toast.success('Product added successfully');
@@ -420,12 +477,24 @@ const SellerDashboard = () => {
                 });
                 fetchProducts(); // Refresh product list
             } else {
-                const data = await response.json();
-                toast.error(data.message || 'Failed to add product');
+                let errorMessage = 'Failed to add product';
+                try {
+                    errorMessage = responseData?.message || errorMessage;
+                } catch (e) {
+                    console.error('Error extracting error message:', e);
+                }
+                
+                if (response.status === 401) {
+                    toast.error('Your session has expired. Please log in again.');
+                    localStorage.removeItem('sellerToken');
+                    navigate('/seller/login');
+                } else {
+                    toast.error(errorMessage);
+                }
             }
         } catch (error) {
             console.error('Error adding product:', error);
-            toast.error('Error adding product');
+            toast.error('Network error. Please check your connection and try again.');
         } finally {
             setIsLoading(false);
         }
