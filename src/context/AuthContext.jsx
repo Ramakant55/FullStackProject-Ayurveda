@@ -43,6 +43,8 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('userProfile');
     localStorage.removeItem('token');
     localStorage.removeItem('user'); // Clear any old format data as well
+    // Dispatch userLogout event for navbar and other components to update
+    window.dispatchEvent(new Event('userLogout'));
   };
 
   const value = {

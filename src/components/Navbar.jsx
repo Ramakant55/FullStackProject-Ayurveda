@@ -88,7 +88,10 @@ const Navbar = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('userProfile');
         setUserProfile(null);
+        setIsAuthenticated(false);
+        setShowProfileMenu(false);
         toast.success('Logged out successfully');
+        window.dispatchEvent(new Event('userLogout'));
         navigate('/');
     };
 
