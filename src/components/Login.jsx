@@ -87,7 +87,10 @@ const Login = () => {
             const userData = {
                 _id: data.user.id, // Server is returning 'id', not '_id'
                 name: data.user.name || 'User',
-                email: data.user.email || formData.email
+                email: data.user.email || formData.email,
+                phone: data.user.phone || '',
+                avatar: data.user.avatar || '',
+                role: data.user.role || 'user'
             };
             
             console.log('Constructed user data:', userData);
@@ -107,6 +110,9 @@ const Login = () => {
             
             // Pass userData and token to the login function
             login(userData, data.token);
+            
+            // Dispatch custom event for navbar to update user profile
+            window.dispatchEvent(new Event('userLogin'));
             
             toast.success('Login successful');
             navigate('/');

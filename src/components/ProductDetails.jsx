@@ -124,7 +124,7 @@ const ProductDetails = () => {
         localStorage.setItem('cartItems', JSON.stringify(cartItems));
         
         // Trigger cart update event
-        window.dispatchEvent(new Event('storage'));
+        window.dispatchEvent(new Event('cartUpdated'));
 
     } catch (error) {
         console.error('Add to cart error:', error);

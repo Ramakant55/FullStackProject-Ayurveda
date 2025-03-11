@@ -33,6 +33,8 @@ export const AuthProvider = ({ children }) => {
     // Store both the user data and token in localStorage
     localStorage.setItem('userProfile', JSON.stringify(userData));
     localStorage.setItem('token', token);
+    // Dispatch userLogin event for navbar and other components to update
+    window.dispatchEvent(new Event('userLogin'));
   };
 
   const logout = () => {

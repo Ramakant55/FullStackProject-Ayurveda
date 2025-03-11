@@ -38,12 +38,22 @@ const Navbar = () => {
             setCartCount(totalCount);
         };
 
+        const handleStorageChange = (e) => {
+            if (e.key === 'userProfile' || e.key === 'token') {
+                checkAuthStatus();
+            } else if (e.key === 'cartItems') {
+                updateCartCount();
+            }
+        };
+
+        window.addEventListener('storage', handleStorageChange);
         window.addEventListener('cartUpdated', handleCartUpdate);
         window.addEventListener('cartItemRemoved', handleCartUpdate);
         window.addEventListener('userLogin', checkAuthStatus);
         window.addEventListener('userLogout', handleLogout);
         
         return () => {
+            window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('cartUpdated', handleCartUpdate);
             window.removeEventListener('cartItemRemoved', handleCartUpdate);
             window.removeEventListener('userLogin', checkAuthStatus);

@@ -43,6 +43,7 @@ const Cart = () => {
             setCartItems(updatedItems);
             localStorage.setItem('cartItems', JSON.stringify(updatedItems));
             calculateTotal(updatedItems);
+            window.dispatchEvent(new Event('cartUpdated'));
             toast.success('Cart updated');
         } catch (error) {
             console.error('Error updating quantity:', error);
@@ -57,6 +58,7 @@ const Cart = () => {
             setCartItems(updatedItems);
             localStorage.setItem('cartItems', JSON.stringify(updatedItems));
             calculateTotal(updatedItems);
+            window.dispatchEvent(new Event('cartUpdated'));
             toast.success('Item removed from cart');
         } catch (error) {
             console.error('Error removing item:', error);
@@ -70,6 +72,7 @@ const Cart = () => {
             setCartItems([]);
             localStorage.setItem('cartItems', '[]');
             setTotal(0);
+            window.dispatchEvent(new Event('cartUpdated'));
             toast.success('Cart cleared');
         } catch (error) {
             console.error('Error clearing cart:', error);
