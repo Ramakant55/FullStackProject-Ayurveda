@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion } from "framer-motion";
 import { 
     EnvelopeIcon, 
@@ -22,6 +22,22 @@ const Login = () => {
     password: ""
   });
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      input::-ms-reveal,
+      input::-ms-clear,
+      input::-webkit-credentials-auto-fill-button {
+        display: none !important;
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
 
   const validateForm = () => {
     const newErrors = {};
@@ -242,6 +258,9 @@ const Login = () => {
               onChange={handleChange}
               placeholder="Enter Your Password"
               className={`w-full bg-white/10 border ${errors.password ? 'border-red-400' : 'border-white/20'} rounded-lg px-10 py-3 text-white placeholder-white/70 focus:outline-none focus:ring-2 focus:ring-white/50 transition-all`}
+              style={{
+                caretColor: 'white'
+              }}
               required
             />
             <button
@@ -250,9 +269,9 @@ const Login = () => {
               className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white/70 hover:text-white"
             >
               {showPassword ? (
-                <EyeSlashIcon className="w-5 h-5" />
+                <EyeSlashIcon className="w-5 h-5 text-white/70" />
               ) : (
-                <EyeIcon className="w-5 h-5" />
+                <EyeIcon className="w-5 h-5 text-white/70" />
               )}
             </button>
             {errors.password && (
