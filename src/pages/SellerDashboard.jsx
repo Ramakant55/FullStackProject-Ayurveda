@@ -117,25 +117,34 @@ class StableProductFormModal extends React.Component {
                     className="fixed inset-0 bg-black/50 backdrop-blur-sm"
                     onClick={onClose}
                 ></div>
-                <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-2xl">
+                <div className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-h-[90vh] px-4 sm:px-6 md:max-w-3xl lg:max-w-4xl">
                     <div className="bg-white rounded-2xl shadow-xl overflow-hidden">
-                        <div className="p-6 bg-emerald-50">
-                            <h2 className="text-2xl font-bold text-emerald-800">
+                        <div className="p-4 bg-emerald-50 flex justify-between items-center">
+                            <h2 className="text-xl sm:text-2xl font-bold text-emerald-800">
                                 {mode === 'add' ? 'Add New Product' : 'Edit Product'}
                             </h2>
+                            <button
+                                type="button"
+                                onClick={onClose}
+                                className="text-gray-500 hover:text-gray-700"
+                            >
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                            </button>
                         </div>
 
-                        <form onSubmit={this.handleSubmit} className="p-6 space-y-4">
-                            <div className="grid grid-cols-2 gap-4">
+                        <form onSubmit={this.handleSubmit} className="p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {/* Basic Info */}
-                                <div className="col-span-2">
+                                <div>
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Product Name</label>
                                     <input
                                         type="text"
                                         name="name"
                                         value={formData.name}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     />
                                 </div>
@@ -148,7 +157,7 @@ class StableProductFormModal extends React.Component {
                                         name="price"
                                         value={formData.price}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     />
                                 </div>
@@ -160,7 +169,7 @@ class StableProductFormModal extends React.Component {
                                         name="originalPrice"
                                         value={formData.originalPrice}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     />
                                 </div>
@@ -173,7 +182,7 @@ class StableProductFormModal extends React.Component {
                                         name="category"
                                         value={formData.category}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     />
                                 </div>
@@ -185,7 +194,7 @@ class StableProductFormModal extends React.Component {
                                         name="subCategory"
                                         value={formData.subCategory}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                     />
                                 </div>
 
@@ -197,32 +206,32 @@ class StableProductFormModal extends React.Component {
                                         name="quantity"
                                         value={formData.quantity}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     />
                                 </div>
 
                                 {/* Image Upload */}
-                                <div className="col-span-2">
+                                <div className="md:col-span-2 lg:col-span-3">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Product Image</label>
                                     <input
                                         type="file"
                                         name="image"
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         accept="image/*"
                                     />
                                 </div>
 
                                 {/* Description */}
-                                <div className="col-span-2">
+                                <div className="md:col-span-2 lg:col-span-3">
                                     <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
                                     <textarea
                                         name="description"
                                         value={formData.description}
                                         onChange={this.handleInputChange}
-                                        rows="4"
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        rows="3"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                         required
                                     ></textarea>
                                 </div>
@@ -235,7 +244,7 @@ class StableProductFormModal extends React.Component {
                                         name="sizes"
                                         value={formData.sizes.join(', ')}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                     />
                                     <p className="mt-1 text-xs text-gray-500">e.g. S, M, L, XL</p>
                                 </div>
@@ -247,12 +256,12 @@ class StableProductFormModal extends React.Component {
                                         name="tags"
                                         value={formData.tags.join(', ')}
                                         onChange={this.handleInputChange}
-                                        className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
+                                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500"
                                     />
                                     <p className="mt-1 text-xs text-gray-500">e.g. new, organic, premium</p>
                                 </div>
 
-                                <div className="col-span-2">
+                                <div className="col-span-1 sm:col-span-2">
                                     <label className="flex items-center space-x-2">
                                         <input
                                             type="checkbox"
@@ -266,17 +275,17 @@ class StableProductFormModal extends React.Component {
                                 </div>
                             </div>
 
-                            <div className="flex justify-end space-x-3 mt-6">
+                            <div className="flex justify-end space-x-3 mt-4 pt-2 border-t">
                                 <button
                                     type="button"
                                     onClick={onClose}
-                                    className="px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
+                                    className="px-3 py-2 text-sm text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors"
                                 >
                                     Cancel
                                 </button>
                                 <button
                                     type="submit"
-                                    className="px-4 py-2 text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
+                                    className="px-3 py-2 text-sm text-white bg-emerald-600 rounded-lg hover:bg-emerald-700 transition-colors flex items-center"
                                     disabled={isLoading}
                                 >
                                     {isLoading ? (
