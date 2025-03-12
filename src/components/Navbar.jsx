@@ -91,7 +91,7 @@ const Navbar = () => {
         setIsAuthenticated(false);
         setShowProfileMenu(false);
         toast.success('Logged out successfully');
-        window.dispatchEvent(new Event('userLogout'));
+        // window.dispatchEvent(new Event('userLogout'));
         navigate('/');
     };
 

@@ -87,7 +87,7 @@ const Login = () => {
         });
 
         const data = await response.json();
-        console.log('Login response:', data); // Debug login response
+        // console.log('Login response:', data); // Debug login response
 
         if (response.ok) {
             // Check the structure of user data carefully
@@ -97,7 +97,7 @@ const Login = () => {
             }
 
             // Log the exact structure of the user object to debug
-            console.log('User data structure:', JSON.stringify(data.user));
+            // console.log('User data structure:', JSON.stringify(data.user));
 
             // Ensure user data has all required fields (server returns 'id', not '_id')
             const userData = {
@@ -109,7 +109,7 @@ const Login = () => {
                 role: data.user.role || 'user'
             };
             
-            console.log('Constructed user data:', userData);
+            // console.log('Constructed user data:', userData);
             
             // Validate that we have a proper user ID
             if (!userData._id) {
