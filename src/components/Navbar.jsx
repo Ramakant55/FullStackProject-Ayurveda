@@ -154,6 +154,17 @@ const Navbar = () => {
                             Profile Settings
                         </Link>
                         
+                        <Link
+                            to="/orders"
+                            className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                            onClick={() => setShowProfileMenu(false)}
+                        >
+                            <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                            My Orders
+                        </Link>
+                        
                         <button
                             onClick={() => {
                                 handleLogout();
@@ -404,6 +415,16 @@ const Navbar = () => {
                                     >
                                         <CogIcon className="h-5 w-5 mr-2" />
                                         Profile Settings
+                                    </Link>
+                                    <Link
+                                        to="/orders"
+                                        className="flex items-center text-gray-600 hover:text-emerald-600 px-3 py-2 rounded-md text-base font-medium"
+                                        onClick={() => setIsOpen(false)}
+                                    >
+                                        <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                                        </svg>
+                                        My Orders
                                     </Link>
                                     <button
                                         onClick={() => {

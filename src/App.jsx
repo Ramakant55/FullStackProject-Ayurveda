@@ -24,6 +24,7 @@ import { AuthProvider } from './context/AuthContext';
 import { SellerAuthProvider } from './context/SellerAuthContext';
 import ProductDetails from './components/ProductDetails';
 import { createContext } from 'react';
+import Orders from './components/Orders';
 
 export const AuthContext = createContext();
 
@@ -99,6 +100,7 @@ function App() {
                   <Route path="/edit-product/:id" element={<ProductFormPage mode="edit" />} />
                   <Route path="/about" element={<AboutUs />} />
                   <Route path="/product/:id" element={<ProductDetails />} />
+                  <Route path="/orders" element={<Orders />} />
                   {/* Catch all route - redirect to home */}
                   <Route path="*" element={<Navigate to="/" replace />} />
                 </Routes>
